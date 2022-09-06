@@ -317,7 +317,7 @@ for (i in 1:ncol(all_combinations)) {
   
 }
 
-file.path <- paste0(outputDir, "excess_weight_loss_kendall_plots_12_18_24_only_colored.pdf")
+file.path <- paste0(outputDir, "excess_weight_loss_plots_12_18_24_only_colored.pdf")
 pdf(file.path, width = 7, height = 5)
 i=1
 for (i in 1:length(plotList)) {
