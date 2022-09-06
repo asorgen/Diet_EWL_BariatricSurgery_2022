@@ -4,7 +4,7 @@
 BioLockJ - https://biolockj-dev-team.github.io/BioLockJ/Getting-Started/
 
 ## 2. Download Diet_EWL_BariatricSurgery_2022 directory
-git clone https://github.com/FarnazFouladi/Diet_EWL_BariatricSurgery_2022.git
+git clone https://github.com/asorgen/Diet_EWL_BariatricSurgery_2022.git
 
 ## 3. Set up required software
 
