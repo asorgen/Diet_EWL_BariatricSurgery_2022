@@ -1,0 +1,4 @@
+# Ignore Mac system files
+.DS_store
+
+~$BS_presentation_20220228.pptx
