@@ -151,14 +151,14 @@ for (month in months) {
   df$PROT = PROT[df$SampleID]
   df$TFAT = PROT[df$SampleID]
   
-  for (metaVariable in metaVariables) {
+  for (macro in macros) {
     
-    metaVariableCol <- df[,which(colnames(df) == metaVariable)]
+    macroCol <- df[,which(colnames(df) == macro)]
     pID <- df$PatientID
     time <- df$Timepoint
     status <- df$ResponderStatus
     
-    df2 <- data.frame(pID, time, status, metaVariableCol)
+    df2 <- data.frame(pID, time, status, macroCol)
     df2 <- na.omit(df2)
     
     for (aStatus in unique(status)) {
@@ -166,13 +166,13 @@ for (month in months) {
       df3 <- df2[df2$status == aStatus,]
       
       # Linear model
-      fit <- anova(lme(metaVariableCol ~ time, method = 'REML', random = ~1 | pID, data = df3))
-      fit <- lme(metaVariableCol ~ time, method = 'REML', random = ~1 | pID, data = df2)
+      fit <- anova(lme(macroCol ~ time, method = 'REML', random = ~1 | pID, data = df3))
+      fit <- lme(macroCol ~ time, method = 'REML', random = ~1 | pID, data = df2)
       smry <- summary(fit)
       tTable <- as.data.frame(smry$tTable)
       tTable$time <- rownames(tTable)
       tTable$ResponderMonth <- month
-      tTable$Variable <- metaVariable
+      tTable$Variable <- macro
       tTable$Group <- aStatus
       rownames(tTable) <- NULL
       
@@ -181,7 +181,7 @@ for (month in months) {
     } # for (aStatus in unique(status))
     
     
-  } # for (metaVariable in metaVariables)
+  } # for (macro in macros)
   
   
 } # for (month in months)

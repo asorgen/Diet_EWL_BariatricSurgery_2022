@@ -569,7 +569,7 @@ for (oMonth in unique(dFrame$outcomeMonth)) {
   
 } # for (oMonth in unique(dFrame$outcomeMonth))
 
-finalTableNames <- c("S10x", "3a", "S10", "3b")
+finalTableNames <- c("S10", "3a", "S10", "3b")
 tableIndex <- 0
 for (oMonth in unique(dFrame$outcomeMonth)) {
   
@@ -1051,7 +1051,7 @@ for (i in seq(1, length(plotList), 4)) {
 }
 dev.off()
 
-##### Kendall plots (with outliers) #####
+##### Kendall plots 12 v. 24 months (with outliers) #####
 message("\n##### Kendall plots (with outliers) #####\n")
 MONTHS <- c("TWELVE", "TWENTY_FOUR")
 mo <- c(12,24)
@@ -1414,5 +1414,90 @@ for (i in seq(1, length(plotList), 4)) {
 }
 dev.off()
 
+
+
+
+##### Spearman plots 12 v. 24 months (with outliers) #####
+message("\n##### Spearman plots (with outliers) #####\n")
+MONTHS <- c("TWELVE", "TWENTY_FOUR")
+mo <- c(12,24)
+y <- 2
+all_combinations <- combn(MONTHS,y)
+month.labs <- c("12 months post-op",
+                "24 months post-op")
+
+plotList <- list()
+index <- 1
+tagIndex <- 1
+
+for (i in 1:ncol(all_combinations)) {
+  
+  m1 <- all_combinations[1,i]
+  m2 <- all_combinations[2,i]
+  
+  col1 <- which(MONTHS == m1)
+  col2 <- which(MONTHS == m2)
+  tagIndex <- 1
+  
+  for (macro in macros) {
+    
+    MACRO <- myTable[,which(colnames(myTable) == macro)]
+    
+    df <- data.frame(PatientID, Timepoint, MACRO)
+    df <- df[df$Timepoint %in% c(m1, m2),]
+    df <- na.omit(df)
+    data_w_outliers <- nrow(df)
+    
+    # df$MACRO <- remove_outliers(df$MACRO)
+    df <- na.omit(df)
+    data_wout_outliers <- nrow(df)
+    diff <- data_w_outliers - data_wout_outliers
+    
+    outlier_message <- paste0(diff, " outlier(s) removed")
+    
+    df <- spread(df, Timepoint, MACRO)
+    
+    tag <- tags[tagIndex]
+    title.lab <- xLabels[which(macros == macro)]
+    x.lab <- month.labs[which(MONTHS == m1)]
+    y.lab <- month.labs[which(MONTHS == m2)]
+    caption.lab <- paste0("cor_test(", m1, " ~ ", m2, " method = 'spearman')")
+    subtitle.lab <- paste0(outlier_message, " (unadj p values)")
+    
+    plot <- ggscatter(df, x = m1, y = m2,
+                      shape = 21, size = 2.5, # Points shape and size
+                      add = "reg.line",  # Add regression line
+                      conf.int = TRUE, # Add confidence interval
+                      cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
+                      cor.coeff.args = list(method = "spearman"),
+                      add.params = list(fill = "lightgray")
+    )
+    
+    plot <- plot + labs(x=x.lab, y = y.lab, tag = tag,
+                        title = title.lab
+                        # ,subtitle = subtitle.lab
+                        # ,caption = caption.lab
+    )
+    
+    plot <- plot + geom_abline(intercept = 0, slope = 1, color = "red", lty = 2)
+    plot
+    plotList[[index]] <- plot
+    index <- index + 1
+    tagIndex <- tagIndex + 1
+    
+  } # for (macro in macros)
+  
+} # for (i in 1:ncol(all_combinations))
+
+
+file.path <- paste0(outputDir, "macronutrient_spearman_by_timepoint_with_outliers_12_24_only.pdf")
+pdf(file.path, width = 6, height = 6)
+for (i in seq(1, length(plotList), 4)) {
+  # message(i)
+  grid.arrange(plotList[[i]], plotList[[i+1]], 
+               plotList[[i+2]], plotList[[i+3]],
+               ncol = 2, nrow = 2)
+}
+dev.off()
 
 
