@@ -17,7 +17,7 @@ See `analysis/README` for instructions on how to repeat the entire analysis on y
 The manuscript for this project is currently available through .
 
 Title:                
-_Study Termination Timepoints Influence Associations between Bariatric Surgery Weight Loss and Diet_
+_???_
 
 Authors:               
 Alicia A. Sorgen, Dale Moss, Ian M. Carroll, Leslie Heinberg, Kristine Steffen, Anthony A. Fodor
