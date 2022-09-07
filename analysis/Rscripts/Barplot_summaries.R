@@ -1,3 +1,7 @@
+#Author: Alicia Sorgen
+#Date: 2022 September 07
+#Description: Generate summary barplots.
+
 ##### Edits for script #####
 rm(list=ls())
 
@@ -833,3 +837,92 @@ dev.off()
 # }
 # dev.off()
 # 
+
+##### Bar plots energy ratios between responder status groups at each timepoint #####
+months <- c("12", "18", "24")
+included <- c("0", "1", "6")
+index <- 1
+plotList <- list()
+macros <- c("CARB", "PROT", "TFAT")
+macro.labs <- c("Energy derived from carbohydrates (%)", "Energy derived from protein (%)", "Energy derived from fat (%)")
+
+for (month in months) {
+  
+  included <- c(included, month)
+  
+  for (macro in macros) {
+    
+    PatientID <- myTable$PatientID
+    Timepoint <- myTable$time
+    MACRO <- myTable[,which(colnames(myTable) == paste0(macro, "_energy_ratio"))]
+    
+    # Create smaller data table with relevant columns
+    df <- data.frame(PatientID, Timepoint, MACRO)
+    
+    # Pick out the patients designated at a particular responder status
+    rIDs <- myTable$PatientID[which(myTable$ResponderStatus == paste0(month, "-month responder"))]
+    nrIDs <- myTable$PatientID[which(myTable$ResponderStatus == paste0(month, "-month non-responder"))]
+    
+    # Filter table to only contain designated IDs
+    df <- df[df$PatientID %in% c(rIDs, nrIDs),]
+    
+    # Filter table to only contain needed timepoints
+    df <- df[df$Timepoint %in% included,]
+    
+    df$Status <- ifelse(df$PatientID %in% rIDs, "Responder",
+                        "Non-responder")
+    
+    stat.test <- df %>%
+      group_by(Timepoint) %>%
+      wilcox_test(MACRO ~ Status) %>%
+      # adjust_pvalue(method = "BH") %>%
+      add_significance()
+    
+    stat.test <- stat.test %>%
+      add_xy_position(x = "Timepoint", fun = "mean_se")
+    
+    plot <- ggbarplot(df, "Timepoint", "MACRO",
+                      fill = "Status",
+                      color = "black", 
+                      palette = c("tomato", "steelblue"),
+                      add = "mean_se",
+                      label = FALSE, position = position_dodge())
+    
+    x <- which(macros == macro)
+    
+    plot <- plot +
+      labs(x = "Time (months)", y = macro.labs[x],
+           tag = tags[index])
+    
+    plot <- plot +
+      stat_pvalue_manual(
+        stat.test,
+        bracket.nudge.y = 0.5,
+        # bracket.shorten = 1,
+        bracket.size = 0.5,
+        tip.length = 0.01,
+        # remove.bracket = TRUE,
+        size = 6,
+        hide.ns = TRUE,
+        # label = "p.adj.signif"
+        label = "p.signif"
+      )
+    plot
+    plotList[[index]] <- plot
+    
+    index <- index + 1
+    
+  } # for (macro in macros)
+  
+} # for (month in months)
+
+plotFileName <- "response_energy_ratio_barplots.pdf"
+file.path <- paste0(outputDir, plotFileName)
+pdf(file.path, width = 15, height = 5)
+for (i in c(1, 4, 7)) {
+  grid.arrange(plotList[[i]], plotList[[i+1]],
+               plotList[[i+2]],
+               ncol = 3, nrow = 1)
+}
+dev.off()
+
