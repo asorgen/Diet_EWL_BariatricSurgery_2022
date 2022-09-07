@@ -17,11 +17,10 @@ See `analysis/README` for instructions on how to repeat the entire analysis on y
 The manuscript for this project is currently available through .
 
 Title:                
-_???_
+_Long-term Weight Loss Outcomes are not Primarily Driven by Dietary Intake Following Roux-en-Y Gastric Bypass and Sleeve Gastrectomy_
 
 Authors:               
-Alicia A. Sorgen, Dale Moss, Ian M. Carroll, Leslie Heinberg, Kristine Steffen, Anthony A. Fodor
-
+Alicia A Sorgen, Kristine Steffen, Anthony Fodor, Ian Carroll, Dale Bond, Ross Crosby, Leslie Heinberg
 
 This article is a preprint and has not been peer-reviewed. It reports new medical research that has yet to be evaluated and so should not be used to guide clinical practice.
 

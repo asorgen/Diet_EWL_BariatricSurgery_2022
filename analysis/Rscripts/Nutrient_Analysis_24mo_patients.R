@@ -672,7 +672,7 @@ for (oMonth in unique(dFrame$outcomeMonth)) {
 } # for (oMonth in unique(dFrame$outcomeMonth))
 
 
-finalTableNames <- c("24mo_patients_6M", "S11", "24mo_patients_18M")
+finalTableNames <- c("24mo_patients_6M", "S10", "24mo_patients_18M")
 tableIndex <- 0
 for (oMonth in c(6, 12, 18)) {
   

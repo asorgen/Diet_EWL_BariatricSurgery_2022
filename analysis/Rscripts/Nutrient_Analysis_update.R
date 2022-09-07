@@ -569,7 +569,7 @@ for (oMonth in unique(dFrame$outcomeMonth)) {
   
 } # for (oMonth in unique(dFrame$outcomeMonth))
 
-finalTableNames <- c("S10", "3a", "S10", "3b")
+finalTableNames <- c("S9", "3a", "S9", "3b")
 tableIndex <- 0
 for (oMonth in unique(dFrame$outcomeMonth)) {
   
