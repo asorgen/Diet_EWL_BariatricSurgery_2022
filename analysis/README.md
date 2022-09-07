@@ -67,18 +67,17 @@ To run the pipeline using **docker images**, add the -d argument:
 ### WeightMetaMerge
 
 ### Nutrient_Analysis
-- **Supplemental Table 9**: Energy_ratio_differences_between_responders.tsv
 
 ### Nutrient_Analysis_update
 - **Figure 4**: macronutrient_v_PEWL_spearman_12_18_24_no_outliers.pdf
 - **Table 3a**: Table_3a_12M.tsv 
 - **Table 3b**: Table_3b_24M.tsv
-- **Supplemental Table 10**: Table_S10_18M.tsv
-- **Supplemental Figure 2**: macronutrient_v_PEWL_spearman_12_18_24_with_outliers.pdf
-- **Supplemental Figure 4**: macronutrient_spearman_by_timepoint_with_outliers_12_24_only.pdf
+- **Supplemental Table 9**: Table_S9_18M.tsv
+- **Supplemental Figure 3**: macronutrient_v_PEWL_spearman_12_18_24_with_outliers.pdf
+- **Supplemental Figure 5**: macronutrient_spearman_by_timepoint_with_outliers_12_24_only.pdf
 
 ### Nutrient_Analysis_24mo_patients
-- **Supplemental Table 11**: Table_S11_12M.tsv
+- **Supplemental Table 10**: Table_S10_12M.tsv
 
 ### Prediction
 - **Figure 2**: excess_weight_loss_plots_12_18_24_only_colored.pdf
@@ -87,7 +86,8 @@ To run the pipeline using **docker images**, add the -d argument:
 ### Barplot_summaries
 - **Figure 1**: surgery_PEWL_barplots.pdf
 - **Supplemental Table 8a**: Wilcoxon_Nutrient_Table_Surgery_Type.tsv
-- **Supplemental Figure 3**: response_intake_barplots.pdf
+- **Supplemental Figure 2**: response_energy_ratio_barplots.pdf
+- **Supplemental Figure 4**: response_intake_barplots.pdf
 
 
 ### Nutrient_Intake_Over_Time
