@@ -146,6 +146,14 @@ summary.df <-myTable %>%
 summary.df
 final <- rbind(final, summary.df)
 
+##### Calculate % excess weight (kg) for each patient #####
+myTable$Percent_Excess_kg <- (myTable$Excess_kg / myTable$Weight_kg) * 100
+summary.df <-myTable %>%
+  group_by(Timepoint) %>%
+  get_summary_stats(Percent_Excess_kg, type = "mean_sd")
+summary.df
+final <- rbind(final, summary.df)
+
 ##### Calculate excess weight loss from baseline #####
 myTable$Excess_Loss_from_BL_kg <- myTable$Baseline_kg - myTable$Ideal_kg
 summary.df <-myTable %>%
