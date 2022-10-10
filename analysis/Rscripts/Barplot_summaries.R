@@ -7,7 +7,7 @@ rm(list=ls())
 
 ANALYSIS <- "ASA24"
 module <- paste0("Barplot_summaries")
-date <- "2022Sep06"
+date <- "2022Oct04"
 
 
 ##### Libraries #####
@@ -177,7 +177,7 @@ for (month in months) {
   tagIndex <- tagIndex + 1
 } # for (month in months)
 
-plotFileName <- "response_intake_barplots.pdf"
+plotFileName <- "response_intake_barplots_individual.pdf"
 file.path <- paste0(outputDir, plotFileName)
 pdf(file.path, width = 5, height = 5)
 for (i in 1:length(plotList)) {
@@ -838,6 +838,278 @@ dev.off()
 # dev.off()
 # 
 
+##### Bar plots intake between responder status groups at each timepoint (formatted pdf) #####
+months <- c("12", "18", "24")
+included <- c("0", "1", "6")
+index <- 1
+plotList <- list()
+tagIndex <- 1
+for (month in months) {
+  
+  included <- c(included, month)
+  
+  for (macro in macros) {
+    
+    PatientID <- myTable$PatientID
+    Timepoint <- myTable$time
+    MACRO <- myTable[,which(colnames(myTable) == macro)]
+    
+    # Create smaller data table with relevant columns
+    df <- data.frame(PatientID, Timepoint, MACRO)
+    
+    # Pick out the patients designated at a particular responder status
+    rIDs <- myTable$PatientID[which(myTable$ResponderStatus == paste0(month, "-month responder"))]
+    nrIDs <- myTable$PatientID[which(myTable$ResponderStatus == paste0(month, "-month non-responder"))]
+    
+    # Filter table to only contain designated IDs
+    df <- df[df$PatientID %in% c(rIDs, nrIDs),]
+    
+    # Filter table to only contain needed timepoints
+    df <- df[df$Timepoint %in% included,]
+    
+    df$Status <- ifelse(df$PatientID %in% rIDs, "Responder",
+                        "Non-responder")
+    
+    stat.test <- df %>%
+      group_by(Timepoint) %>%
+      wilcox_test(MACRO ~ Status) %>%
+      # adjust_pvalue(method = "BH") %>%
+      add_significance()
+    
+    stat.test <- stat.test %>%
+      add_xy_position(x = "Timepoint", fun = "mean_se")
+    
+    plot <- ggbarplot(df, "Timepoint", "MACRO",
+                      fill = "Status",
+                      color = "black", 
+                      palette = c("tomato", "steelblue"),
+                      add = "mean_se",
+                      label = FALSE, position = position_dodge())
+    
+    x <- which(macros == macro)
+    plot <- plot +
+      labs(x = "Time (months)", y = macro.labs[x])
+    
+    # plot <- plot + labs(tag = tags[tagIndex])
+    
+    plot <- plot +
+      stat_pvalue_manual(
+        stat.test,
+        bracket.nudge.y = 0.5,
+        # bracket.shorten = 1,
+        bracket.size = 0.5,
+        tip.length = 0.01,
+        # remove.bracket = TRUE,
+        size = 6,
+        hide.ns = TRUE,
+        # label = "p.adj.signif"
+        label = "p.signif"
+      )
+    plot
+    plotList[[index]] <- plot
+    
+    
+    avg <- df %>%
+      group_by(Timepoint, Status) %>%
+      get_summary_stats(MACRO, type = "mean_sd")
+    avg$variable <- macro
+    
+    index <- index + 1
+    
+  } # for (macro in macros)
+  
+  tagIndex <- tagIndex + 1
+} # for (month in months)
+
+plotFileName <- "response_intake_barplots_macros.pdf"
+file.path <- paste0(outputDir, plotFileName)
+pdf(file.path, width = 10, height = 10)
+for (i in seq(1, length(plotList), 5)) {
+  grid.arrange(plotList[[i]], 
+               plotList[[i+1]],
+               plotList[[i+2]],
+               plotList[[i+3]],
+               # plotList[[i+4]],
+               ncol = 2, nrow = 2)
+}
+dev.off()
+
+plotFileName <- "response_intake_barplots_macros_only.pdf"
+file.path <- paste0(outputDir, plotFileName)
+pdf(file.path, width = 15, height = 5)
+for (i in seq(1, length(plotList), 5)) {
+  grid.arrange(#plotList[[i]], 
+    plotList[[i+1]],
+    plotList[[i+2]],
+    plotList[[i+3]],
+    # plotList[[i+4]],
+    ncol = 3, nrow = 1)
+}
+dev.off()
+
+##### Macronutrients over time (grouped by ResponderStatus) #####
+results <- data.frame()
+months <- c("6", "12", "18", "24")
+included <- c("0", "1")
+plotList <- list()
+index <- 1
+for (month in months) {
+  
+  included <- c(included, month)
+  
+  for (macro in macros) {
+    
+    PatientID <- myTable$PatientID
+    Timepoint <- myTable$time
+    macroCol <- myTable[,which(colnames(myTable) == macro)]
+    PEWL_kg <- myTable$PEWL_kg
+    
+    df <- data.frame(PatientID, Timepoint, PEWL_kg)
+    df <- na.omit(df)
+    df$Timepoint <- paste0("M", df$Timepoint)
+    
+    df <- spread(df, Timepoint, PEWL_kg)
+    m <- which(colnames(df) == paste0("M", month))
+    
+    df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
+                                 ifelse(df[,m] < 50, "Non-responder",
+                                        NA))
+    df <- df[!is.na(df$ResponderStatus),]
+    bl <- which(colnames(df) == "M0")
+    end <- which(colnames(df) == "ResponderStatus")-1
+    df <- df %>%
+      gather("Timepoint", "PEWL_kg", bl:end)
+    df$Timepoint <- gsub("M", "", df$Timepoint)
+    
+    
+    df <- df[df$Timepoint %in% included,]
+    df$Timepoint <- as.factor(df$Timepoint)
+    df$Timepoint <- factor(df$Timepoint, levels = included)
+    df$SampleID <- paste0(df$PatientID, "-", str_pad(df$Timepoint, width=2, pad="0"))
+    
+    names(macroCol) = myTable[, "SampleID"]
+    
+    # Add info to each row
+    df$macroCol = macroCol[df$SampleID]
+    df <- na.omit(df)
+    
+    # Averages
+    averages <- df %>%
+      group_by(Timepoint, ResponderStatus) %>%
+      get_summary_stats(macroCol, type = "mean_sd")
+    averages$variable <- paste0(macro, " energy ratio")
+    
+    averages$final <- paste0(round(averages$mean, 2), " ± ", round(averages$sd, 2))
+    
+    # Tukey HSD
+    stats.summ <- df %>%
+      group_by(ResponderStatus) %>%
+      tukey_hsd(macroCol ~ Timepoint) %>%
+      adjust_pvalue(method = "BH") %>%
+      add_significance()
+    stats.summ$p_value <- roundP(stats.summ$p.adj)
+    stats.summ$Macronutrient <- paste0(macro, " energy ratio")
+    stats.summ$ResponderMonth <- month
+    
+    stats.summ$group1_Mean <- NA
+    stats.summ$group2_Mean <- NA
+    for (x in 1:length(included)) {
+      
+      Tx_R <- averages$final[which(averages$Timepoint == included[x] & averages$ResponderStatus == "Responder")]
+      Tx_NR <- averages$final[which(averages$Timepoint == included[x] & averages$ResponderStatus == "Non-responder")]
+      
+      stats.summ$group1_Mean[which(stats.summ$group1 == included[x] & stats.summ$ResponderStatus == "Responder")] <- Tx_R
+      stats.summ$group1_Mean[which(stats.summ$group1 == included[x] & stats.summ$ResponderStatus == "Non-responder")] <- Tx_NR
+      
+      stats.summ$group2_Mean[which(stats.summ$group2 == included[x] & stats.summ$ResponderStatus == "Responder")] <- Tx_R
+      stats.summ$group2_Mean[which(stats.summ$group2 == included[x] & stats.summ$ResponderStatus == "Non-responder")] <- Tx_NR
+      
+    } # for (x in 1:length(included))
+    
+    results <- rbind(results, stats.summ)
+    
+    stats.summ <- stats.summ %>%
+      add_xy_position(x = "Timepoint", fun = "mean_se")
+    
+    plot <- ggbarplot(df, "Timepoint", "macroCol",
+                      fill = "ResponderStatus",
+                      color = "black",
+                      palette = c("tomato", "steelblue"),
+                      add = "mean_se",
+                      label = FALSE, position = position_dodge(),
+                      facet.by = c("ResponderStatus")); plot
+    
+    x <- which(macros == macro)
+    # tag <- tags[tagIndex]
+    plot <- plot +
+      labs(x = "Time (months)", y = macro.labs[x]); plot
+    
+    plot <- plot + theme(legend.position="none"); plot
+    
+    plot <- plot +
+      stat_pvalue_manual(
+        stats.summ,
+        bracket.nudge.y = 0.5,
+        # bracket.shorten = 1,
+        bracket.size = 0.5,
+        tip.length = 0.01,
+        # remove.bracket = TRUE,
+        size = 6,
+        hide.ns = TRUE,
+        step.increase = 0.01,
+        label = "p.adj.signif"
+      ); plot
+    
+    plotList[[index]] <- plot
+    index <- index + 1
+    
+    
+  } # for (macro in macros)
+} # for (month in months)
+
+resultsFileName <- "macronutrient_over_time_by_Outcome_tukey.tsv"
+file.path <- paste0(outputDir, resultsFileName)
+write.table(results, file.path, sep="\t",quote = FALSE, row.names = FALSE)
+
+plotFileName <- "macronutrient_barplots_over_time_by_Outcome_tukey.pdf"
+file.path <- paste0(outputDir, plotFileName)
+pdf(file.path, width = 10, height = 10)
+for (i in seq(1, length(plotList), 5)) {
+  grid.arrange(plotList[[i]], 
+               plotList[[i+1]],
+               plotList[[i+2]],
+               plotList[[i+3]],
+               plotList[[i+4]],
+               ncol = 2, nrow = 3)
+}
+dev.off()
+
+
+plotFileName <- "macronutrient_barplots_over_time_by_Outcome_tukey_no_total.pdf"
+file.path <- paste0(outputDir, plotFileName)
+pdf(file.path, width = 10, height = 10)
+for (i in seq(1, length(plotList), 5)) {
+  grid.arrange(plotList[[i]], 
+               plotList[[i+1]],
+               plotList[[i+2]],
+               plotList[[i+3]],
+               # plotList[[i+4]],
+               ncol = 2, nrow = 2)
+}
+dev.off()
+
+plotFileName <- "macronutrient_barplots_over_time_by_Outcome_tukey_macros_only.pdf"
+file.path <- paste0(outputDir, plotFileName)
+pdf(file.path, width = 15, height = 5)
+for (i in seq(1, length(plotList), 5)) {
+  grid.arrange(#plotList[[i]], 
+    plotList[[i+1]],
+    plotList[[i+2]],
+    plotList[[i+3]],
+    # plotList[[i+4]],
+    ncol = 3, nrow = 1)
+}
+dev.off()
 ##### Bar plots energy ratios between responder status groups at each timepoint #####
 months <- c("12", "18", "24")
 included <- c("0", "1", "6")
@@ -925,4 +1197,5 @@ for (i in c(1, 4, 7)) {
                ncol = 3, nrow = 1)
 }
 dev.off()
+
 

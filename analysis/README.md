@@ -74,7 +74,7 @@ To run the pipeline using **docker images**, add the -d argument:
 - **Table 3b**: Table_3b_24M.tsv
 - **Supplemental Table 9**: Table_S9_18M.tsv
 - **Supplemental Figure 3**: macronutrient_v_PEWL_spearman_12_18_24_with_outliers.pdf
-- **Supplemental Figure 5**: macronutrient_spearman_by_timepoint_with_outliers_12_24_only.pdf
+- **Supplemental Figure 5**: macronutrient_spearman_by_timepoint_with_outliers_12_24_only_no_outliers.pdf
 
 ### Nutrient_Analysis_24mo_patients
 - **Supplemental Table 10**: Table_S10_12M.tsv
