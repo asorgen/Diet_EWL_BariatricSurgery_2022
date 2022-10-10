@@ -12,7 +12,7 @@ rm(list=ls())
 ############# To edit #############
 ANALYSIS <- "ASA24"
 module <- paste0("ASA24Average")
-date <- "2022Sep06"
+date <- "2022Oct04"
 ###################################
 
 ##### Environment set up #####
@@ -31,10 +31,10 @@ root <- dir(root, pattern=module, full.names=TRUE)
 if ((dirname(dirname(dirname(getwd()))) == "/mnt/efs/pipelines")) {
   message("************* Running in BioLockJ *************")
   args <- commandArgs(trailingOnly = TRUE)
-  metaVariables <- args[2:length(args)]
+  asa24Name <- args[1]
 } else {
   setwd(paste0(root, "/script"))
-  
+  asa24Name <- "TNS_Master_file_enrolled_5-31-22.txt"
 }
 rm(date, today, root, ANALYSIS, module)
 
@@ -47,8 +47,6 @@ output = file.path(pipeRoot, "input/metadataTables/")
 
 
 ## Read in ASA24 table
-args <- commandArgs(trailingOnly = TRUE)
-asa24Name <- args[1]
 message(asa24Name)
 asa24 <- read.delim(paste0(inputDir, asa24Name), sep="\t",header = TRUE)
 
@@ -81,7 +79,7 @@ for (SampleID in SampleIDs) {
   
   ## Assign column numbers for first to last ASA24 variable
   metaStart <- which(colnames(asa24_SampleID) == "KCAL")
-  metaEnd <- which(colnames(asa24_SampleID) == "SampleID")-1
+  metaEnd <- which(colnames(asa24_SampleID) == "DayoftheWeek")-1
   
   
   ## Maintain only applicable columns
