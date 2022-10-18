@@ -21,7 +21,6 @@ module <- "WeightMetaMerge"
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
 # args <- "~/git/Diet_EWL_BariatricSurgery_2022"
-args <- c(args, "ASA24_metadata.tsv", "HEI_data.txt")
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")

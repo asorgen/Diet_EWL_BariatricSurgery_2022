@@ -26,7 +26,6 @@ library(data.table); message("data.table: Version ", packageVersion("data.table"
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
 # args <- "~/git/Diet_EWL_BariatricSurgery_2022"
-args <- c(args, "weight_update_BLonly_excluded.txt")
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")
