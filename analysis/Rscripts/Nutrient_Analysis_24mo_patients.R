@@ -7,7 +7,6 @@ rm(list=ls())
 
 ANALYSIS <- "ASA24"
 module <- paste0("Nutrient_Analysis_24mo_patients")
-date <- "2022Sep06"
 included <- c(  0
                 , 1
                 , 6
@@ -32,25 +31,56 @@ library(tidyr); message("tidyr: Version ", packageVersion("tidyr"))
 library(data.table); message("data.table: Version ", packageVersion("data.table"))
 
 ##### Set up working environment #####
-today <- Sys.Date()
-today <- format(today, "%Y%b%d")
-today <- as.character(today)
+args <- commandArgs(trailingOnly = TRUE)
+# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+# args <- c(args, "weight_update.txt")
 
-
-if (date == today) {
-  root <- paste0("~/BioLockJ_pipelines/",ANALYSIS,"_analysis_", today)
+if (args[1] == "BLJ") {
+  message("\n************* Running in BioLockJ *************")
 } else {
-  root <- paste0("~/BioLockJ_pipelines/",ANALYSIS,"_analysis_", date)
+  message("\n************* Running locally *************")
+  gitRoot <- args[1]
+  message("gitRoot = ", gitRoot)
+  
+  today <- as.character(format(Sys.Date(), "%Y%b%d"))
+  root <- paste0("~/BioLockJ_pipelines/")
+  dir.create(root, showWarnings = FALSE)
+  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+  dir.create(root, showWarnings = FALSE)
+  rootInput <- paste0(root, "input/")
+  dir.create(rootInput, showWarnings = FALSE)
+  
+  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
+  message("gitInput = ", gitInput)
+  
+  file.copy(gitInput,
+            rootInput,
+            recursive = TRUE)
+  
+  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
+  message(paste0(root, module, "/"))
+  
+  gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
+  message("gitScripts = ", gitScripts)
+  
+  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
+  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
+  file.copy(script,
+            paste0(root, module, "/script/"),
+            recursive = TRUE)
+  
+  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  
+  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
+  script = paste0(gitScripts,"/functions.R"); script
+  file.copy(script,
+            paste0(root, module, "/resources/"),
+            recursive = TRUE)
+  
+  setwd(paste0(root, module, "/script/"))
+  
 }
-root <- dir(root, pattern=module, full.names=TRUE)
-
-if ((dirname(dirname(dirname(getwd()))) == "/mnt/efs/pipelines")) {
-  message("************* Running in BioLockJ *************")
-  args <- commandArgs(trailingOnly = TRUE)
-} else {
-  setwd(paste0(root, "/script"))
-}
-rm(date, today, root, ANALYSIS, module)
+rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
 
 pipeRoot = dirname(dirname(getwd()))
 moduleDir <- dirname(getwd())
@@ -672,7 +702,7 @@ for (oMonth in unique(dFrame$outcomeMonth)) {
 } # for (oMonth in unique(dFrame$outcomeMonth))
 
 
-finalTableNames <- c("24mo_patients_6M", "S10", "24mo_patients_18M")
+finalTableNames <- c("24mo_patients_6M", "S3", "24mo_patients_18M")
 tableIndex <- 0
 for (oMonth in c(6, 12, 18)) {
   
