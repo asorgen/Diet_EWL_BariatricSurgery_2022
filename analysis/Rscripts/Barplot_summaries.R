@@ -21,7 +21,6 @@ library(nlme)
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
 # args <- "~/git/Diet_EWL_BariatricSurgery_2022"
-# args <- c(args, "weight_update.txt")
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")
