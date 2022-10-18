@@ -12,31 +12,62 @@ rm(list=ls())
 ############# To edit #############
 ANALYSIS <- "ASA24"
 module <- paste0("ASA24Average")
-date <- "2022Oct04"
 ###################################
 
-##### Environment set up #####
-today <- Sys.Date()
-today <- format(today, "%Y%b%d")
-today <- as.character(today)
+##### Set up working environment #####
+args <- commandArgs(trailingOnly = TRUE)
+# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+args <- c(args, "TNS_Master_file_enrolled_5-31-22.txt")
 
-
-if (date == today) {
-  root <- paste0("~/BioLockJ_pipelines/",ANALYSIS,"_analysis_", today)
+if (args[1] == "BLJ") {
+  message("\n************* Running in BioLockJ *************")
 } else {
-  root <- paste0("~/BioLockJ_pipelines/",ANALYSIS,"_analysis_", date)
+  message("\n************* Running locally *************")
+  gitRoot <- args[1]
+  message("gitRoot = ", gitRoot)
+  
+  today <- as.character(format(Sys.Date(), "%Y%b%d"))
+  root <- paste0("~/BioLockJ_pipelines/")
+  dir.create(root, showWarnings = FALSE)
+  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+  dir.create(root, showWarnings = FALSE)
+  rootInput <- paste0(root, "input/")
+  dir.create(rootInput, showWarnings = FALSE)
+  
+  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
+  message("gitInput = ", gitInput)
+  
+  # file.copy(gitInput,
+  #           rootInput,
+  #           recursive = TRUE)
+  
+  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
+  message(paste0(root, module, "/"))
+  
+  gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
+  message("gitScripts = ", gitScripts)
+  
+  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
+  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
+  file.copy(script,
+            paste0(root, module, "/script/"),
+            recursive = TRUE)
+  
+  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  
+  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
+  script = paste0(gitScripts,"/functions.R"); script
+  file.copy(script,
+            paste0(root, module, "/resources/"),
+            recursive = TRUE)
+  
+  setwd(paste0(root, module, "/script/"))
+  
 }
-root <- dir(root, pattern=module, full.names=TRUE)
+rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
 
-if ((dirname(dirname(dirname(getwd()))) == "/mnt/efs/pipelines")) {
-  message("************* Running in BioLockJ *************")
-  args <- commandArgs(trailingOnly = TRUE)
-  asa24Name <- args[1]
-} else {
-  setwd(paste0(root, "/script"))
-  asa24Name <- "TNS_Master_file_enrolled_5-31-22.txt"
-}
-rm(date, today, root, ANALYSIS, module)
+pipeRoot = dirname(dirname(getwd()))
+moduleDir <- dirname(getwd())
 
 ##### Prep #####
 pipeRoot = dirname(dirname(getwd()))
@@ -47,6 +78,7 @@ output = file.path(pipeRoot, "input/metadataTables/")
 
 
 ## Read in ASA24 table
+asa24Name <- args[2]
 message(asa24Name)
 asa24 <- read.delim(paste0(inputDir, asa24Name), sep="\t",header = TRUE)
 

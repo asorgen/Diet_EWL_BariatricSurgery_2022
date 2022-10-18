@@ -8,7 +8,6 @@ rm(list=ls())
 ANALYSIS <- "ASA24"
 
 module <- paste0("Diet_Recommendations")
-date <- "2022Oct04"
 
 ##### Global setup #####
 R <- sessionInfo()
@@ -25,29 +24,62 @@ library(nlme); message("nlme:", packageVersion("nlme"))
 library(dplyr); message("dplyr:", packageVersion("dplyr"))
 library(data.table); message("data.table:", packageVersion("data.table"))
 
-##### Environment set up #####
-today <- Sys.Date()
-today <- format(today, "%Y%b%d")
-today <- as.character(today)
+##### Set up working environment #####
+args <- commandArgs(trailingOnly = TRUE)
+# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+# args <- c(args, "weight_update.txt")
 
-if (date == today) {
-  root <- paste0("~/BioLockJ_pipelines/",ANALYSIS,"_analysis_", today)
+if (args[1] == "BLJ") {
+  message("\n************* Running in BioLockJ *************")
 } else {
-  root <- paste0("~/BioLockJ_pipelines/",ANALYSIS,"_analysis_", date)
+  message("\n************* Running locally *************")
+  gitRoot <- args[1]
+  message("gitRoot = ", gitRoot)
+  
+  today <- as.character(format(Sys.Date(), "%Y%b%d"))
+  root <- paste0("~/BioLockJ_pipelines/")
+  dir.create(root, showWarnings = FALSE)
+  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+  dir.create(root, showWarnings = FALSE)
+  rootInput <- paste0(root, "input/")
+  dir.create(rootInput, showWarnings = FALSE)
+  
+  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
+  message("gitInput = ", gitInput)
+  
+  file.copy(gitInput,
+            rootInput,
+            recursive = TRUE)
+  
+  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
+  message(paste0(root, module, "/"))
+  
+  gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
+  message("gitScripts = ", gitScripts)
+  
+  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
+  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
+  file.copy(script,
+            paste0(root, module, "/script/"),
+            recursive = TRUE)
+  
+  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  
+  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
+  script = paste0(gitScripts,"/functions.R"); script
+  file.copy(script,
+            paste0(root, module, "/resources/"),
+            recursive = TRUE)
+  
+  setwd(paste0(root, module, "/script/"))
+  
 }
-root <- dir(root, pattern=module, full.names=TRUE)
+rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
 
-if ((dirname(dirname(dirname(getwd()))) == "/mnt/efs/pipelines")) {
-  message("************* Running in BioLockJ *************")
-  # metaVariables <- commandArgs(trailingOnly = TRUE)
-} else {
-  setwd(paste0(root, "/script"))
-}
-rm(date, today, root, ANALYSIS, module)
-
-##### Prep #####
 pipeRoot = dirname(dirname(getwd()))
 moduleDir <- dirname(getwd())
+
+##### Prep #####
 funcScript <- paste0(moduleDir,"/resources/functions.R")
 source(funcScript)
 
@@ -107,7 +139,7 @@ myTable$TFAT_energy_ratio <- (myTable$TFAT_in_kcal / myTable$KCAL) * 100
 myTable$PROT_1.1g <- 1.1 * myTable$Ideal_kg
 myTable$PROT_1.5g <- 1.5 * myTable$Ideal_kg
 
-##### Analyze actual v recommended protein intake #####
+##### Analyze actual v recommended protein intake at each timepoint #####
 results <- data.frame()
 summary <- data.frame()
 plotList <- list()
@@ -351,7 +383,7 @@ for (i in seq(1, length(plotList), 1)) {
 }
 dev.off()
 
-##### Analyze actual v recommended protein intake - all timepoints #####
+##### Analyze actual v recommended protein intake - post-op timepoints combined #####
 results <- data.frame()
 summary <- data.frame()
 plotList <- list()
@@ -437,8 +469,8 @@ for (month in months) {
   results <- rbind(results, stats.summ)
   
   
-  # title.lab <- paste0("")
-  # subtitle.lab <- paste0("Chi-squared ", p_value)
+  title.lab <- paste0("All post-op timepoints")
+  subtitle.lab <- paste0("Chi-squared ", p_value)
   x.lab <- paste0("Patients classified at ", month, "-months")
   
   plot <- ggplot(freq, aes(fill=Protein, y=Freq, x=ResponderStatus)) + 
@@ -447,6 +479,8 @@ for (month in months) {
     scale_fill_manual(values=Colors); plot
   
   plot <- plot + labs(tag = tags[index])
+  plot <- plot + labs(title = title.lab)
+  plot <- plot + labs(subtitle = subtitle.lab)
   
   plot <- plot + geom_text(aes(label = paste0(round(Percent, 1), "%")), size = 3, hjust = 0.5, position = "stack", vjust = 1.5, colour = "white"); plot
   
