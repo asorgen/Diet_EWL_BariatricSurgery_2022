@@ -6,7 +6,8 @@
 rm(list=ls())
 
 ANALYSIS <- "ASA24"
-module <- paste0("Barplot_summaries")
+moduleRoot <- paste0("Barplot_summaries")
+params <- "~/git/Diet_EWL_BariatricSurgery_2022"
 
 
 ##### Libraries #####
@@ -20,54 +21,81 @@ library(nlme)
 
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+
+if (length(args) == 0) {
+  args <- params
+  rm(params)
+}
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")
 } else {
   message("\n************* Running locally *************")
   gitRoot <- args[1]
-  message("gitRoot = ", gitRoot)
+  gitInput <- file.path(gitRoot, "analysis", "input")
+  gitScripts <- file.path(gitRoot, "analysis", "Rscripts"); rm(gitRoot)
   
-  today <- as.character(format(Sys.Date(), "%Y%b%d"))
   root <- paste0("~/BioLockJ_pipelines/")
-  dir.create(root, showWarnings = FALSE)
-  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
-  dir.create(root, showWarnings = FALSE)
-  rootInput <- paste0(root, "input/")
-  dir.create(rootInput, showWarnings = FALSE)
+  pipeline <- paste0(ANALYSIS,"_analysis_")
   
-  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
-  message("gitInput = ", gitInput)
+  if (any(dir(root) %like% pipeline) == TRUE) {
+    root <- paste0(root,"/",str_subset(dir(root), pipeline), "/")
+  } else {
+    today <- as.character(format(Sys.Date(), "%Y%b%d"))
+    root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+    dir.create(root, showWarnings = FALSE)
+  }; rm(pipeline, ANALYSIS)
   
-  file.copy(gitInput,
-            rootInput,
-            recursive = TRUE)
+  if (any(dir(root) == "input") == FALSE) {
+    # rootInput <- paste0(root, "input/")
+    # dir.create(rootInput, showWarnings = FALSE)
+    
+    file.copy(gitInput,
+              root,
+              recursive = TRUE)
+    
+  }; rm(gitInput)
   
-  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
-  message(paste0(root, module, "/"))
+  module <- moduleRoot
   
-  gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
-  message("gitScripts = ", gitScripts)
+  if (any(dir(root) %like% module) == TRUE) {
+    moduleDir <- paste0(root,str_subset(dir(root), module), "/")
+  } else {
+    moduleDir <- paste0(root, module, "/")
+    dir.create(moduleDir, showWarnings = FALSE)
+  }; rm(module, root)
   
-  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
-  file.copy(script,
-            paste0(root, module, "/script/"),
-            recursive = TRUE)
+  scriptDir <- paste0(moduleDir, "script/")
+  if (any(dir(moduleDir) == "script") == FALSE) {
+    dir.create(scriptDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/", moduleRoot, ".R")
+    file.copy(script,
+              scriptDir,
+              recursive = TRUE)
+  }; rm(scriptDir, moduleRoot)
   
-  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  outputDir <- paste0(moduleDir, "output/")
+  if (any(dir(moduleDir) == "output") == FALSE) {
+    dir.create(outputDir, showWarnings = FALSE)
+  }
   
-  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/functions.R"); script
-  file.copy(script,
-            paste0(root, module, "/resources/"),
-            recursive = TRUE)
+  files <- list.files(outputDir, recursive = TRUE, full.names = TRUE)
+  file.remove(files); rm(files, outputDir)
   
-  setwd(paste0(root, module, "/script/"))
+  resourcesDir <- paste0(moduleDir, "resources/")
+  if (any(dir(moduleDir) == "resources") == FALSE) {
+    dir.create(resourcesDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/functions.R")
+    file.copy(script,
+              resourcesDir,
+              recursive = TRUE)
+  }; rm(resourcesDir, gitScripts)
+  
+  setwd(paste0(moduleDir, "script/"))
   
 }
-rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
 
 pipeRoot = dirname(dirname(getwd()))
 moduleDir <- dirname(getwd())
@@ -154,7 +182,7 @@ for (month in months) {
     df <- df[df$Timepoint %in% included,]
     
     df$Status <- ifelse(df$PatientID %in% rIDs, "Responder",
-                                "Non-responder")
+                                "Suboptimal responder")
     
     stat.test <- df %>%
       group_by(Timepoint) %>%
@@ -190,6 +218,9 @@ for (month in months) {
         # label = "p.adj.signif"
         label = "p.signif"
       )
+    plot <- plot +
+      guides(fill = guide_legend(title.position = "top", title.hjust = 0.5)) +
+      theme(legend.background = element_rect(linetype = 1, size = 0.1, colour = 1))
     plot
     plotList[[index]] <- plot
     
@@ -308,6 +339,9 @@ for (macro in macros2) {
       # label = "p.adj.signif"
       label = "p.signif"
     )
+  plot <- plot +
+    guides(fill = guide_legend(title.position = "top", title.hjust = 0.5)) +
+    theme(legend.background = element_rect(linetype = 1, size = 0.1, colour = 1))
   plot
   plotList[[index]] <- plot
   
@@ -403,7 +437,7 @@ for (month in months) {
   df <- df[df$Timepoint %in% included[2:length(included)],]
   
   df$Status <- ifelse(df$PatientID %in% rIDs, "Responder",
-                      "Non-responder")
+                      "Suboptimal responder")
   
   stat.test <- df %>%
     group_by(Timepoint) %>%
@@ -439,6 +473,9 @@ for (month in months) {
       # label = "p.adj.signif"
       label = "p.signif"
     )
+  plot <- plot +
+    guides(fill = guide_legend(title.position = "top", title.hjust = 0.5)) +
+    theme(legend.background = element_rect(linetype = 1, size = 0.1, colour = 1))
   plot
   plotList[[index]] <- plot
   
@@ -508,6 +545,9 @@ plot <- plot +
     # label = "p.adj.signif"
     label = "p.signif"
   )
+plot <- plot +
+  guides(fill = guide_legend(title.position = "top", title.hjust = 0.5)) +
+  theme(legend.background = element_rect(linetype = 1, size = 0.1, colour = 1))
 plot
 plotList[[index]] <- plot
 
@@ -520,354 +560,6 @@ for (i in c(1)) {
 }
 dev.off()
 
-# ##### Bar plots PEWL between surgery types and quintiles at each timepoint #####
-# index <- 1
-# plotList <- list()
-# 
-# PatientID <- myTable$PatientID
-# Timepoint <- myTable$time
-# PEWL <- myTable$Percent_Loss_kg
-# Surgery <- myTable$Surgery
-# 
-# # Create smaller data table with relevant columns
-# df <- data.frame(PatientID, Timepoint, PEWL, Surgery)
-# df <- na.omit(df)
-# df <- df[!(df$Timepoint == 0),]
-# 
-# stat.test <- df %>%
-#   group_by(Timepoint) %>%
-#   wilcox_test(PEWL ~ Surgery) %>%
-#   # adjust_pvalue(method = "BH") %>%
-#   add_significance()
-# 
-# stat.test <- stat.test %>%
-#   add_xy_position(x = "Timepoint", fun = "mean_se")
-# 
-# plot <- ggbarplot(df, "Timepoint", "PEWL",
-#                   fill = "Surgery",
-#                   color = "black", 
-#                   palette = c("#3171BC", "#E8C241"),
-#                   add = "mean_se",
-#                   label = FALSE, position = position_dodge())
-# 
-# x <- which(macros == macro)
-# 
-# plot <- plot +
-#   labs(x = "Time (months)", y = "Excess weight loss (%)")
-# 
-# plot <- plot +
-#   stat_pvalue_manual(
-#     stat.test,
-#     bracket.nudge.y = 0.5,
-#     # bracket.shorten = 1,
-#     bracket.size = 0.5,
-#     tip.length = 0.01,
-#     # remove.bracket = TRUE,
-#     size = 6,
-#     hide.ns = TRUE,
-#     # label = "p.adj.signif"
-#     label = "p.signif"
-#   )
-# plot
-# plotList[[index]] <- plot
-# 
-# plotFileName <- "surgery_PEWL_barplots.pdf"
-# file.path <- paste0(outputDir, plotFileName)
-# pdf(file.path, width = 5, height = 5)
-# for (i in c(1)) {
-#   grid.arrange(plotList[[i]],
-#                ncol = 1, nrow = 1)
-# }
-# dev.off()
-# 
-# 
-# 
-# ##### Bar plots Percent_Loss (BL-12M) between surgery types and quintiles at each timepoint #####
-# index <- 1
-# plotList <- list()
-# 
-# PatientID <- myTable$PatientID
-# Timepoint <- myTable$time
-# Percent_Loss <- myTable$Percent_Loss_kg
-# Surgery <- myTable$Surgery
-# Weight <- myTable$Weight_kg
-# 
-# 
-# # Create smaller data table with relevant columns
-# df <- data.frame(PatientID, Timepoint, Percent_Loss, Surgery, Weight)
-# df <- na.omit(df)
-# df <- df[!(df$Timepoint %in% c(18, 24)),]
-# 
-# stat.test <- df %>%
-#   group_by(Timepoint) %>%
-#   wilcox_test(Weight ~ Surgery) %>%
-#   # adjust_pvalue(method = "BH") %>%
-#   add_significance()
-# 
-# stat.test <- stat.test %>%
-#   add_xy_position(x = "Timepoint", fun = "mean_se")
-# 
-# plot <- ggbarplot(df, "Timepoint", "Weight",
-#                   fill = "Surgery",
-#                   color = "black", 
-#                   palette = c("#3171BC", "#ED6D51"),
-#                   add = "mean_se",
-#                   label = FALSE, position = position_dodge())
-# 
-# plot <- plot +
-#   labs(x = "Time (months)", y = "Weight (kg)")
-# 
-# plot <- plot +
-#   stat_pvalue_manual(
-#     stat.test,
-#     bracket.nudge.y = 0.5,
-#     # bracket.shorten = 1,
-#     bracket.size = 0.5,
-#     tip.length = 0.01,
-#     # remove.bracket = TRUE,
-#     size = 6,
-#     hide.ns = TRUE,
-#     # label = "p.adj.signif"
-#     label = "p.signif"
-#   )
-# plot
-# plotList[[index]] <- plot
-# 
-# plotFileName <- "surgery_Weight_barplots_BLto12M.pdf"
-# file.path <- paste0(outputDir, plotFileName)
-# pdf(file.path, width = 5, height = 5)
-# for (i in c(1)) {
-#   grid.arrange(plotList[[i]],
-#                ncol = 1, nrow = 1)
-# }
-# dev.off()
-# 
-# 
-# df <- df[!(df$Timepoint %in% c(0)),]
-# stat.test <- df %>%
-#   group_by(Timepoint) %>%
-#   wilcox_test(Percent_Loss ~ Surgery) %>%
-#   # adjust_pvalue(method = "BH") %>%
-#   add_significance()
-# 
-# stat.test <- stat.test %>%
-#   add_xy_position(x = "Timepoint", fun = "mean_se")
-# 
-# plot <- ggbarplot(df, "Timepoint", "Percent_Loss",
-#                   fill = "Surgery",
-#                   color = "black", 
-#                   palette = c("#3171BC", "#ED6D51"),
-#                   add = "mean_se",
-#                   label = FALSE, position = position_dodge())
-# 
-# plot <- plot +
-#   labs(x = "Time (months)", y = "Weight loss (%)")
-# 
-# plot <- plot +
-#   stat_pvalue_manual(
-#     stat.test,
-#     bracket.nudge.y = 0.5,
-#     # bracket.shorten = 1,
-#     bracket.size = 0.5,
-#     tip.length = 0.01,
-#     # remove.bracket = TRUE,
-#     size = 6,
-#     hide.ns = TRUE,
-#     # label = "p.adj.signif"
-#     label = "p.signif"
-#   )
-# plot
-# plotList[[2]] <- plot
-# 
-# plotFileName <- "surgery_Percent_Loss_barplots_BLto12M.pdf"
-# file.path <- paste0(outputDir, plotFileName)
-# pdf(file.path, width = 5, height = 5)
-# for (i in c(2)) {
-#   grid.arrange(plotList[[i]],
-#                ncol = 1, nrow = 1)
-# }
-# dev.off()
-# 
-# 
-# 
-# 
-# plotList <- list()
-# PatientID <- myTable$PatientID
-# Timepoint <- myTable$time
-# Surgery <- myTable$Surgery
-# Quintile <- myTable$QuintileAssignment_12M
-# 
-# # Create smaller data table with relevant columns
-# df <- data.frame(PatientID, Timepoint, Surgery, Quintile)
-# df <- na.omit(df)
-# df <- df[(df$Timepoint %in% c(12)),]
-# 
-# df2 <- as.data.frame(table(df$Surgery, df$Quintile))
-# names(df2)[names(df2) == "Var1"] <- "Surgery"
-# names(df2)[names(df2) == "Var2"] <- "Quintile"
-# names(df2)[names(df2) == "Freq"] <- "Frequency"
-# 
-# plot <- ggplot(df2, aes(fill=Surgery, y=Frequency, x=Quintile)) + 
-#   geom_bar(position="stack", stat="identity", color = "black")+
-#   labs(y = "Number of patients")+
-#   scale_fill_manual(values=c("#3171BC",
-#                              "#ED6D51"))
-# plot
-# plotList[[1]] <- plot
-# 
-# plotFileName <- "surgery_quintile_stackedbarplots_BLto12M.pdf"
-# file.path <- paste0(outputDir, plotFileName)
-# pdf(file.path, width = 5, height = 5)
-# for (i in c(1)) {
-#   grid.arrange(plotList[[i]],
-#                ncol = 1, nrow = 1)
-# }
-# dev.off()
-# 
-# 
-# ##### Bar plots Percent_Loss (BL-24M) between surgery types and quintiles at each timepoint #####
-# index <- 1
-# plotList <- list()
-# 
-# PatientID <- myTable$PatientID
-# Timepoint <- myTable$time
-# Percent_Loss <- myTable$Percent_Loss_kg
-# Surgery <- myTable$Surgery
-# Weight <- myTable$Weight_kg
-# 
-# 
-# # Create smaller data table with relevant columns
-# df <- data.frame(PatientID, Timepoint, Percent_Loss, Surgery, Weight)
-# df <- na.omit(df)
-# # df <- df[!(df$Timepoint %in% c(18, 24)),]
-# 
-# stat.test <- df %>%
-#   group_by(Timepoint) %>%
-#   wilcox_test(Weight ~ Surgery) %>%
-#   # adjust_pvalue(method = "BH") %>%
-#   add_significance()
-# 
-# stat.test <- stat.test %>%
-#   add_xy_position(x = "Timepoint", fun = "mean_se")
-# 
-# plot <- ggbarplot(df, "Timepoint", "Weight",
-#                   fill = "Surgery",
-#                   color = "black", 
-#                   palette = c("#3171BC", "#ED6D51"),
-#                   add = "mean_se",
-#                   label = FALSE, position = position_dodge())
-# 
-# plot <- plot +
-#   labs(x = "Time (months)", y = "Weight (kg)")
-# 
-# plot <- plot +
-#   stat_pvalue_manual(
-#     stat.test,
-#     bracket.nudge.y = 0.5,
-#     # bracket.shorten = 1,
-#     bracket.size = 0.5,
-#     tip.length = 0.01,
-#     # remove.bracket = TRUE,
-#     size = 6,
-#     hide.ns = TRUE,
-#     # label = "p.adj.signif"
-#     label = "p.signif"
-#   )
-# plot
-# plotList[[index]] <- plot
-# 
-# plotFileName <- "surgery_Weight_barplots_BLto24M.pdf"
-# file.path <- paste0(outputDir, plotFileName)
-# pdf(file.path, width = 5, height = 5)
-# for (i in c(1)) {
-#   grid.arrange(plotList[[i]],
-#                ncol = 1, nrow = 1)
-# }
-# dev.off()
-# 
-# 
-# df <- df[!(df$Timepoint %in% c(0)),]
-# stat.test <- df %>%
-#   group_by(Timepoint) %>%
-#   wilcox_test(Percent_Loss ~ Surgery) %>%
-#   # adjust_pvalue(method = "BH") %>%
-#   add_significance()
-# 
-# stat.test <- stat.test %>%
-#   add_xy_position(x = "Timepoint", fun = "mean_se")
-# 
-# plot <- ggbarplot(df, "Timepoint", "Percent_Loss",
-#                   fill = "Surgery",
-#                   color = "black", 
-#                   palette = c("#3171BC", "#ED6D51"),
-#                   add = "mean_se",
-#                   label = FALSE, position = position_dodge())
-# 
-# plot <- plot +
-#   labs(x = "Time (months)", y = "Weight loss (%)")
-# 
-# plot <- plot +
-#   stat_pvalue_manual(
-#     stat.test,
-#     bracket.nudge.y = 0.5,
-#     # bracket.shorten = 1,
-#     bracket.size = 0.5,
-#     tip.length = 0.01,
-#     # remove.bracket = TRUE,
-#     size = 6,
-#     hide.ns = TRUE,
-#     # label = "p.adj.signif"
-#     label = "p.signif"
-#   )
-# plot
-# plotList[[2]] <- plot
-# 
-# plotFileName <- "surgery_Percent_Loss_barplots_BLto24M.pdf"
-# file.path <- paste0(outputDir, plotFileName)
-# pdf(file.path, width = 5, height = 5)
-# for (i in c(2)) {
-#   grid.arrange(plotList[[i]],
-#                ncol = 1, nrow = 1)
-# }
-# dev.off()
-# 
-# 
-# 
-# 
-# plotList <- list()
-# PatientID <- myTable$PatientID
-# Timepoint <- myTable$time
-# Surgery <- myTable$Surgery
-# Quintile <- myTable$QuintileAssignment_24M
-# 
-# # Create smaller data table with relevant columns
-# df <- data.frame(PatientID, Timepoint, Surgery, Quintile)
-# df <- na.omit(df)
-# df <- df[(df$Timepoint %in% c(24)),]
-# 
-# df2 <- as.data.frame(table(df$Surgery, df$Quintile))
-# names(df2)[names(df2) == "Var1"] <- "Surgery"
-# names(df2)[names(df2) == "Var2"] <- "Quintile"
-# names(df2)[names(df2) == "Freq"] <- "Frequency"
-# 
-# plot <- ggplot(df2, aes(fill=Surgery, y=Frequency, x=Quintile)) + 
-#   geom_bar(position="stack", stat="identity", color = "black")+
-#   labs(y = "Number of patients")+
-#   scale_fill_manual(values=c("#3171BC",
-#                              "#ED6D51"))
-# 
-# plot
-# plotList[[1]] <- plot
-# 
-# plotFileName <- "surgery_quintile_stackedbarplots_BLto24M.pdf"
-# file.path <- paste0(outputDir, plotFileName)
-# pdf(file.path, width = 5, height = 5)
-# for (i in c(1)) {
-#   grid.arrange(plotList[[i]],
-#                ncol = 1, nrow = 1)
-# }
-# dev.off()
-# 
 
 ##### Bar plots intake between responder status groups at each timepoint (formatted pdf) #####
 months <- c("12", "18", "24")
@@ -899,7 +591,7 @@ for (month in months) {
     df <- df[df$Timepoint %in% included,]
     
     df$Status <- ifelse(df$PatientID %in% rIDs, "Responder",
-                        "Non-responder")
+                        "Suboptimal responder")
     
     stat.test <- df %>%
       group_by(Timepoint) %>%
@@ -936,6 +628,9 @@ for (month in months) {
         # label = "p.adj.signif"
         label = "p.signif"
       )
+    plot <- plot +
+      guides(fill = guide_legend(title.position = "top", title.hjust = 0.5)) +
+      theme(legend.background = element_rect(linetype = 1, size = 0.1, colour = 1))
     plot
     plotList[[index]] <- plot
     
@@ -1003,7 +698,7 @@ for (month in months) {
     m <- which(colnames(df) == paste0("M", month))
     
     df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                                 ifelse(df[,m] < 50, "Non-responder",
+                                 ifelse(df[,m] < 50, "Suboptimal responder",
                                         NA))
     df <- df[!is.na(df$ResponderStatus),]
     bl <- which(colnames(df) == "M0")
@@ -1047,13 +742,13 @@ for (month in months) {
     for (x in 1:length(included)) {
       
       Tx_R <- averages$final[which(averages$Timepoint == included[x] & averages$ResponderStatus == "Responder")]
-      Tx_NR <- averages$final[which(averages$Timepoint == included[x] & averages$ResponderStatus == "Non-responder")]
+      Tx_NR <- averages$final[which(averages$Timepoint == included[x] & averages$ResponderStatus == "Suboptimal responder")]
       
       stats.summ$group1_Mean[which(stats.summ$group1 == included[x] & stats.summ$ResponderStatus == "Responder")] <- Tx_R
-      stats.summ$group1_Mean[which(stats.summ$group1 == included[x] & stats.summ$ResponderStatus == "Non-responder")] <- Tx_NR
+      stats.summ$group1_Mean[which(stats.summ$group1 == included[x] & stats.summ$ResponderStatus == "Suboptimal responder")] <- Tx_NR
       
       stats.summ$group2_Mean[which(stats.summ$group2 == included[x] & stats.summ$ResponderStatus == "Responder")] <- Tx_R
-      stats.summ$group2_Mean[which(stats.summ$group2 == included[x] & stats.summ$ResponderStatus == "Non-responder")] <- Tx_NR
+      stats.summ$group2_Mean[which(stats.summ$group2 == included[x] & stats.summ$ResponderStatus == "Suboptimal responder")] <- Tx_NR
       
     } # for (x in 1:length(included))
     
@@ -1173,7 +868,7 @@ for (month in months) {
     df <- df[df$Timepoint %in% included,]
     
     df$Status <- ifelse(df$PatientID %in% rIDs, "Responder",
-                        "Non-responder")
+                        "Suboptimal responder")
     
     stat.test <- df %>%
       group_by(Timepoint) %>%
@@ -1210,6 +905,9 @@ for (month in months) {
         # label = "p.adj.signif"
         label = "p.signif"
       )
+    plot <- plot +
+      guides(fill = guide_legend(title.position = "top", title.hjust = 0.5)) +
+      theme(legend.background = element_rect(linetype = 1, size = 0.1, colour = 1))
     plot
     plotList[[index]] <- plot
     

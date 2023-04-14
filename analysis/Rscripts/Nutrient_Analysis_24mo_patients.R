@@ -6,7 +6,7 @@
 rm(list=ls())
 
 ANALYSIS <- "ASA24"
-module <- paste0("Nutrient_Analysis_24mo_patients")
+moduleRoot <- paste0("Nutrient_Analysis_24mo_patients")
 included <- c(  0
                 , 1
                 , 6
@@ -14,6 +14,9 @@ included <- c(  0
                 , 18
                 , 24
 )
+params <- vector()
+params <- c(params, "~/git/Diet_EWL_BariatricSurgery_2022")
+
 
 ##### Libraries #####
 R <- sessionInfo()
@@ -32,54 +35,87 @@ library(data.table); message("data.table: Version ", packageVersion("data.table"
 
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+
+if (length(args) == 0) {
+  args <- params
+}
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")
 } else {
   message("\n************* Running locally *************")
   gitRoot <- args[1]
-  message("gitRoot = ", gitRoot)
-  
-  today <- as.character(format(Sys.Date(), "%Y%b%d"))
-  root <- paste0("~/BioLockJ_pipelines/")
-  dir.create(root, showWarnings = FALSE)
-  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
-  dir.create(root, showWarnings = FALSE)
-  rootInput <- paste0(root, "input/")
-  dir.create(rootInput, showWarnings = FALSE)
-  
-  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
-  message("gitInput = ", gitInput)
-  
-  file.copy(gitInput,
-            rootInput,
-            recursive = TRUE)
-  
-  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
-  message(paste0(root, module, "/"))
-  
+  gitInput <- file.path(gitRoot, "analysis", "input")
   gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
-  message("gitScripts = ", gitScripts)
+  rm(gitRoot)
   
-  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
-  file.copy(script,
-            paste0(root, module, "/script/"),
-            recursive = TRUE)
+  root <- paste0("~/BioLockJ_pipelines/")
+  pipeline <- paste0(ANALYSIS,"_analysis_")
   
-  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  if (any(dir(root) %like% pipeline) == TRUE) {
+    root <- paste0(root,"/",str_subset(dir(root), pipeline), "/")
+  } else {
+    today <- as.character(format(Sys.Date(), "%Y%b%d"))
+    root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+    dir.create(root, showWarnings = FALSE)
+  }
+  rm(pipeline)
   
-  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/functions.R"); script
-  file.copy(script,
-            paste0(root, module, "/resources/"),
-            recursive = TRUE)
+  if (any(dir(root) == "input") == FALSE) {
+    file.copy(gitInput,
+              root,
+              recursive = TRUE)
+    
+  }
+  rm(gitInput)
+  module <- moduleRoot
   
-  setwd(paste0(root, module, "/script/"))
+  if (any(dir(root) %like% module) == TRUE) {
+    moduleDir <- paste0(root,str_subset(dir(root), module), "/")
+  } else {
+    moduleDir <- paste0(root, module, "/")
+    dir.create(moduleDir, showWarnings = FALSE)
+  }
+  rm(module, root)
+  
+  scriptDir <- paste0(moduleDir, "script/")
+  if (any(dir(moduleDir) == "script") == FALSE) {
+    dir.create(scriptDir, showWarnings = FALSE)
+  }
+  rm(scriptDir)
+  
+  outputDir <- paste0(moduleDir, "output/")
+  if (any(dir(moduleDir) == "output") == FALSE) {
+    dir.create(outputDir, showWarnings = FALSE)
+  }
+  
+  files <- list.files(outputDir, recursive = TRUE, full.names = TRUE)
+  file.remove(files)
+  rm(outputDir, files)
+  
+  resourcesDir <- paste0(moduleDir, "resources/")
+  if (any(dir(moduleDir) == "resources") == FALSE) {
+    dir.create(resourcesDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/functions.R")
+    file.copy(script,
+              resourcesDir,
+              recursive = TRUE)
+    
+    script = paste0(gitScripts,"/", moduleRoot, ".R"); script
+    file.copy(script,
+              resourcesDir,
+              recursive = TRUE)
+    rm(script)
+    
+  }
+  rm(resourcesDir, gitScripts)
+  
+  setwd(paste0(moduleDir, "script/"))
+  rm(moduleDir)
   
 }
-rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
+rm(params, moduleRoot, ANALYSIS)
 
 pipeRoot = dirname(dirname(getwd()))
 moduleDir <- dirname(getwd())
@@ -164,7 +200,7 @@ for (month in months) {
     m <- which(colnames(df) == paste0("M", month))
     
     df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                                 ifelse(df[,m] < 50, "Non-responder", 
+                                 ifelse(df[,m] < 50, "Suboptimal responder", 
                                         NA))
     df <- df[!is.na(df$ResponderStatus),]
     bl <- which(colnames(df) == "M0")
@@ -544,7 +580,7 @@ for (month in months) {
   
   included <- c(included, month)
   
-  for (macro in macros) {
+  for (macro in c(macros, "Weight_kg")) {
     
     PatientID <- myTable2$PatientID
     Timepoint <- myTable2$time
@@ -559,10 +595,10 @@ for (month in months) {
     m <- which(colnames(df) == paste0("M", month))
     
     df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                                 ifelse(df[,m] < 50, "Non-responder", 
+                                 ifelse(df[,m] < 50, "Suboptimal responder", 
                                         NA))
     n_Responders <- length(which(df$ResponderStatus == "Responder"))
-    n_Nonresponders <- length(which(df$ResponderStatus == "Non-responder"))
+    n_Nonresponders <- length(which(df$ResponderStatus == "Suboptimal responder"))
     
     df <- df[!is.na(df$ResponderStatus),]
     bl <- which(colnames(df) == "M0")
@@ -640,6 +676,8 @@ for (month in months) {
   
 } # for (month in months)
 
+file.path <- paste0(outputDir, "Wilcoxon_results_table.tsv")
+write.table(dFrame, file.path,sep="\t",quote = FALSE, row.names = FALSE)
 
 ##### Make final tables (24-month status patients) #####
 message("\n##### Make final tables (24-month status patients) #####\n")
@@ -768,7 +806,7 @@ for (oMonth in c(6, 12, 18)) {
   resultsTable2[1,] <- gsub("_TFAT", "", resultsTable2[1,])
   resultsTable2[1,] <- gsub("TP", "", resultsTable2[1,])
   resultsTable2[1,] <- gsub("pValue", "p value", resultsTable2[1,])
-  resultsTable2[1,] <- gsub("Nonresponder", "Non-responder", resultsTable2[1,])
+  resultsTable2[1,] <- gsub("Nonresponder", "Suboptimal responder", resultsTable2[1,])
   
   resultsTable2 <- rbind(colnames(resultsTable2), resultsTable2)
   resultsTable2[1,] <- gsub("Responder_", "", resultsTable2[1,])

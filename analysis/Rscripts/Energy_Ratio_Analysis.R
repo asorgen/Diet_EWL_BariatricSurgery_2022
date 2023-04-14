@@ -7,7 +7,8 @@ rm(list=ls())
 ##### To edit #####
 ANALYSIS <- "ASA24"
 
-module <- paste0("Energy_Ratio_Analysis")
+moduleRoot <- paste0("Energy_Ratio_Analysis")
+params <- "~/git/Diet_EWL_BariatricSurgery_2022"
 
 ##### Global setup #####
 R <- sessionInfo()
@@ -26,54 +27,81 @@ library(data.table); message("data.table:", packageVersion("data.table"))
 
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+
+if (length(args) == 0) {
+  args <- params
+  rm(params)
+}
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")
 } else {
   message("\n************* Running locally *************")
   gitRoot <- args[1]
-  message("gitRoot = ", gitRoot)
+  gitInput <- file.path(gitRoot, "analysis", "input")
+  gitScripts <- file.path(gitRoot, "analysis", "Rscripts"); rm(gitRoot)
   
-  today <- as.character(format(Sys.Date(), "%Y%b%d"))
   root <- paste0("~/BioLockJ_pipelines/")
-  dir.create(root, showWarnings = FALSE)
-  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
-  dir.create(root, showWarnings = FALSE)
-  rootInput <- paste0(root, "input/")
-  dir.create(rootInput, showWarnings = FALSE)
+  pipeline <- paste0(ANALYSIS,"_analysis_")
   
-  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
-  message("gitInput = ", gitInput)
+  if (any(dir(root) %like% pipeline) == TRUE) {
+    root <- paste0(root,"/",str_subset(dir(root), pipeline), "/")
+  } else {
+    today <- as.character(format(Sys.Date(), "%Y%b%d"))
+    root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+    dir.create(root, showWarnings = FALSE)
+  }; rm(pipeline, ANALYSIS)
   
-  file.copy(gitInput,
-            rootInput,
-            recursive = TRUE)
+  if (any(dir(root) == "input") == FALSE) {
+    # rootInput <- paste0(root, "input/")
+    # dir.create(rootInput, showWarnings = FALSE)
+    
+    file.copy(gitInput,
+              root,
+              recursive = TRUE)
+    
+  }; rm(gitInput)
   
-  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
-  message(paste0(root, module, "/"))
+  module <- moduleRoot
   
-  gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
-  message("gitScripts = ", gitScripts)
+  if (any(dir(root) %like% module) == TRUE) {
+    moduleDir <- paste0(root,str_subset(dir(root), module), "/")
+  } else {
+    moduleDir <- paste0(root, module, "/")
+    dir.create(moduleDir, showWarnings = FALSE)
+  }; rm(module, root)
   
-  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
-  file.copy(script,
-            paste0(root, module, "/script/"),
-            recursive = TRUE)
+  scriptDir <- paste0(moduleDir, "script/")
+  if (any(dir(moduleDir) == "script") == FALSE) {
+    dir.create(scriptDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/", moduleRoot, ".R")
+    file.copy(script,
+              scriptDir,
+              recursive = TRUE)
+  }; rm(scriptDir, moduleRoot)
   
-  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  outputDir <- paste0(moduleDir, "output/")
+  if (any(dir(moduleDir) == "output") == FALSE) {
+    dir.create(outputDir, showWarnings = FALSE)
+  }
   
-  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/functions.R"); script
-  file.copy(script,
-            paste0(root, module, "/resources/"),
-            recursive = TRUE)
+  files <- list.files(outputDir, recursive = TRUE, full.names = TRUE)
+  file.remove(files); rm(files, outputDir)
   
-  setwd(paste0(root, module, "/script/"))
+  resourcesDir <- paste0(moduleDir, "resources/")
+  if (any(dir(moduleDir) == "resources") == FALSE) {
+    dir.create(resourcesDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/functions.R")
+    file.copy(script,
+              resourcesDir,
+              recursive = TRUE)
+  }; rm(resourcesDir, gitScripts)
+  
+  setwd(paste0(moduleDir, "script/"))
   
 }
-rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
 
 pipeRoot = dirname(dirname(getwd()))
 moduleDir <- dirname(getwd())
@@ -167,7 +195,7 @@ for (month in months) {
     m <- which(colnames(df) == paste0("M", month))
 
     df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                                 ifelse(df[,m] < 50, "Non-responder",
+                                 ifelse(df[,m] < 50, "Suboptimal responder",
                                         NA))
     df <- df[!is.na(df$ResponderStatus),]
     bl <- which(colnames(df) == "M0")
@@ -196,7 +224,7 @@ for (month in months) {
     averages$variable <- paste0(macro, " energy ratio")
 
     rRows <- which(averages$ResponderStatus == "Responder")
-    nrRows <- which(averages$ResponderStatus == "Non-responder")
+    nrRows <- which(averages$ResponderStatus == "Suboptimal responder")
     
     averages$final <- paste0(round(averages$mean, 2), " ± ", round(averages$sd, 2))
     
@@ -264,7 +292,7 @@ for (macro in macros) {
     get_summary_stats(ratioCol, type = "mean_sd")
   averages$variable <- paste0(macro, " energy ratio")
 
-  # nrRows <- which(averages$ResponderStatus == "Non-responder")
+  # nrRows <- which(averages$ResponderStatus == "Suboptimal responder")
 
   averages$final <- paste0(round(averages$mean, 2), " ± ", round(averages$sd, 2))
   T0 <- averages$final[which(averages$Timepoint == 0)]
@@ -373,7 +401,7 @@ for (month in months) {
     m <- which(colnames(df) == paste0("M", month))
     
     df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                                 ifelse(df[,m] < 50, "Non-responder",
+                                 ifelse(df[,m] < 50, "Suboptimal responder",
                                         NA))
     df <- df[!is.na(df$ResponderStatus),]
     bl <- which(colnames(df) == "M0")
@@ -417,13 +445,13 @@ for (month in months) {
     for (x in 1:length(included)) {
       
       Tx_R <- averages$final[which(averages$Timepoint == included[x] & averages$ResponderStatus == "Responder")]
-      Tx_NR <- averages$final[which(averages$Timepoint == included[x] & averages$ResponderStatus == "Non-responder")]
+      Tx_NR <- averages$final[which(averages$Timepoint == included[x] & averages$ResponderStatus == "Suboptimal responder")]
       
       stats.summ$group1_Mean[which(stats.summ$group1 == included[x] & stats.summ$ResponderStatus == "Responder")] <- Tx_R
-      stats.summ$group1_Mean[which(stats.summ$group1 == included[x] & stats.summ$ResponderStatus == "Non-responder")] <- Tx_NR
+      stats.summ$group1_Mean[which(stats.summ$group1 == included[x] & stats.summ$ResponderStatus == "Suboptimal responder")] <- Tx_NR
       
       stats.summ$group2_Mean[which(stats.summ$group2 == included[x] & stats.summ$ResponderStatus == "Responder")] <- Tx_R
-      stats.summ$group2_Mean[which(stats.summ$group2 == included[x] & stats.summ$ResponderStatus == "Non-responder")] <- Tx_NR
+      stats.summ$group2_Mean[which(stats.summ$group2 == included[x] & stats.summ$ResponderStatus == "Suboptimal responder")] <- Tx_NR
       
     } # for (x in 1:length(included))
 

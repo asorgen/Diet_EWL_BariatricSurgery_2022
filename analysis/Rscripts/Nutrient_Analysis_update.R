@@ -2,19 +2,6 @@
 #Date: 2022 June 13
 #Description: Analysis of nutreint intake between responders for 24-month patients at 12 and 18 months.
 
-##### Edits for script #####
-rm(list=ls())
-
-ANALYSIS <- "ASA24"
-module <- paste0("Nutrient_Analysis_update")
-included <- c(  0
-                , 1
-                , 6
-                , 12
-                , 18
-                , 24
-)
-
 ##### Libraries #####
 R <- sessionInfo()
 message(R$R.version$version.string)
@@ -30,56 +17,105 @@ library(nlme); message("nlme: Version ", packageVersion("nlme"))
 library(tidyr); message("tidyr: Version ", packageVersion("tidyr"))
 library(data.table); message("data.table: Version ", packageVersion("data.table"))
 
+
+##### Edits for script #####
+rm(list=ls())
+
+ANALYSIS <- "ASA24"
+moduleRoot <- paste0("Nutrient_Analysis_update")
+included <- c(  0
+                , 1
+                , 6
+                , 12
+                , 18
+                , 24
+)
+params <- vector()
+params <- c(params, "~/git/Diet_EWL_BariatricSurgery_2022")
+
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+
+if (length(args) == 0) {
+  args <- params
+}
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")
 } else {
   message("\n************* Running locally *************")
   gitRoot <- args[1]
-  message("gitRoot = ", gitRoot)
-  
-  today <- as.character(format(Sys.Date(), "%Y%b%d"))
-  root <- paste0("~/BioLockJ_pipelines/")
-  dir.create(root, showWarnings = FALSE)
-  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
-  dir.create(root, showWarnings = FALSE)
-  rootInput <- paste0(root, "input/")
-  dir.create(rootInput, showWarnings = FALSE)
-  
-  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
-  message("gitInput = ", gitInput)
-  
-  file.copy(gitInput,
-            rootInput,
-            recursive = TRUE)
-  
-  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
-  message(paste0(root, module, "/"))
-  
+  gitInput <- file.path(gitRoot, "analysis", "input")
   gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
-  message("gitScripts = ", gitScripts)
+  rm(gitRoot)
   
-  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
-  file.copy(script,
-            paste0(root, module, "/script/"),
-            recursive = TRUE)
+  root <- paste0("~/BioLockJ_pipelines/")
+  pipeline <- paste0(ANALYSIS,"_analysis_")
   
-  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  if (any(dir(root) %like% pipeline) == TRUE) {
+    root <- paste0(root,"/",str_subset(dir(root), pipeline), "/")
+  } else {
+    today <- as.character(format(Sys.Date(), "%Y%b%d"))
+    root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+    dir.create(root, showWarnings = FALSE)
+  }
+  rm(pipeline)
   
-  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/functions.R"); script
-  file.copy(script,
-            paste0(root, module, "/resources/"),
-            recursive = TRUE)
+  if (any(dir(root) == "input") == FALSE) {
+    file.copy(gitInput,
+              root,
+              recursive = TRUE)
+    
+  }
+  rm(gitInput)
+  module <- moduleRoot
   
-  setwd(paste0(root, module, "/script/"))
+  if (any(dir(root) %like% module) == TRUE) {
+    moduleDir <- paste0(root,str_subset(dir(root), module), "/")
+  } else {
+    moduleDir <- paste0(root, module, "/")
+    dir.create(moduleDir, showWarnings = FALSE)
+  }
+  rm(module, root)
+  
+  scriptDir <- paste0(moduleDir, "script/")
+  if (any(dir(moduleDir) == "script") == FALSE) {
+    dir.create(scriptDir, showWarnings = FALSE)
+  }
+  rm(scriptDir)
+  
+  outputDir <- paste0(moduleDir, "output/")
+  if (any(dir(moduleDir) == "output") == FALSE) {
+    dir.create(outputDir, showWarnings = FALSE)
+  }
+  
+  files <- list.files(outputDir, recursive = TRUE, full.names = TRUE)
+  file.remove(files)
+  rm(outputDir, files)
+  
+  resourcesDir <- paste0(moduleDir, "resources/")
+  if (any(dir(moduleDir) == "resources") == FALSE) {
+    dir.create(resourcesDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/functions.R")
+    file.copy(script,
+              resourcesDir,
+              recursive = TRUE)
+    
+    script = paste0(gitScripts,"/", moduleRoot, ".R"); script
+    file.copy(script,
+              resourcesDir,
+              recursive = TRUE)
+    rm(script)
+    
+  }
+  rm(resourcesDir, gitScripts)
+  
+  setwd(paste0(moduleDir, "script/"))
+  rm(moduleDir)
   
 }
-rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
+rm(params, moduleRoot, ANALYSIS)
 
 pipeRoot = dirname(dirname(getwd()))
 moduleDir <- dirname(getwd())
@@ -443,7 +479,7 @@ for (month in months) {
   
   included <- c(included, month)
   
-  for (macro in macros) {
+  for (macro in c(macros, "Weight_kg")) {
     
     PatientID <- myTable$PatientID
     Timepoint <- myTable$time
@@ -458,10 +494,10 @@ for (month in months) {
     m <- which(colnames(df) == paste0("M", month))
     
     df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                                 ifelse(df[,m] < 50, "Non-responder", 
+                                 ifelse(df[,m] < 50, "Suboptimal responder", 
                                         NA))
     n_Responders <- length(which(df$ResponderStatus == "Responder"))
-    n_Nonresponders <- length(which(df$ResponderStatus == "Non-responder"))
+    n_Nonresponders <- length(which(df$ResponderStatus == "Suboptimal responder"))
     
     df <- df[!is.na(df$ResponderStatus),]
     bl <- which(colnames(df) == "M0")
@@ -538,6 +574,9 @@ for (month in months) {
   } # for (macro in macros)
   
 } # for (month in months)
+
+file.path <- paste0(outputDir, "Wilcoxon_results_table.tsv")
+write.table(dFrame, file.path,sep="\t",quote = FALSE, row.names = FALSE)
 
 
 ##### Make final tables #####
@@ -665,7 +704,7 @@ for (oMonth in unique(dFrame$outcomeMonth)) {
   resultsTable2[1,] <- gsub("_TFAT", "", resultsTable2[1,])
   resultsTable2[1,] <- gsub("TP", "", resultsTable2[1,])
   resultsTable2[1,] <- gsub("pValue", "p value", resultsTable2[1,])
-  resultsTable2[1,] <- gsub("Nonresponder", "Non-responder", resultsTable2[1,])
+  resultsTable2[1,] <- gsub("Nonresponder", "Suboptimal responder", resultsTable2[1,])
   
   resultsTable2 <- rbind(colnames(resultsTable2), resultsTable2)
   resultsTable2[1,] <- gsub("Responder_", "", resultsTable2[1,])
@@ -1306,14 +1345,31 @@ for (i in 2:length(MONTHS)) {
     # caption.lab <- paste0("cor_test(", macro, " ~ %EWL, method = 'spearman')")
     subtitle.lab <- paste0("(n = ", n, ")")
     
+    ###### Added 1 line (addition 1 of 2)
+    corTest = cor.test(y=df2$PEWL, x=df2$MACRO, method = "spearman", p.accuracy = 0.001)
+    ###### end of dded 1 line
+    min <- min(df2$MACRO)
+    max <- max(df2$PEWL) + 10
+    
+    ###### Taken from orig --> comment out two lines
     plot <- ggscatter(df2, x = "MACRO", y = "PEWL",
                       shape = 21, size = 2.5, # Points shape and size
                       add = "reg.line",  # Add regression line
                       conf.int = TRUE, # Add confidence interval
                       cor.coef = TRUE, # Add correlation coefficient. see ?stat_cor
-                      cor.coeff.args = list(method = "spearman", p.accuracy = 0.001, label.x.npc = 0.25, label.y.npc = 1),
+                      cor.coeff.args = list(method = "spearman", p.accuracy = 0.001),
+                      cor.coef.coord = c(min, max),
                       add.params = list(fill = "lightgray")
-    )
+                      
+    ) 
+    # plot <- ggpar(plot, ylim = c(min, max))
+    
+    ###### Added 4 lines  (addition 2 of 2)
+    # plot <- plot + 
+    #   labs(subtitle = paste("R=",signif(corTest$estimate, 3),
+    #                      ", p=",signif(corTest$p.value, 3))) +
+    #   theme(plot.title=element_text(hjust=0.5))
+    ###### end of added 4 lines
     
     # plot <- plot + stat_cor(label.x = xMax, label.y = yMax)
     
@@ -1346,11 +1402,13 @@ for (i in 2:length(MONTHS)) {
 
 
 file.path <- paste0(outputDir, "macronutrient_v_PEWL_spearman_12_18_24_no_outliers.pdf")
-pdf(file.path, width = 12, height = 3)
-for (i in seq(1, length(plotList), 4)) {
+pdf(file.path, width = 13, height = 9)
+for (i in seq(1, length(plotList), 12)) {
   # message(i)
   grid.arrange(plotList[[i]], plotList[[i+1]], plotList[[i+2]], plotList[[i+3]],
-               ncol = 4, nrow = 1)
+               plotList[[i+4]], plotList[[i+5]], plotList[[i+6]], plotList[[i+7]],
+               plotList[[i+8]], plotList[[i+9]], plotList[[i+10]], plotList[[i+11]],
+               ncol = 4, nrow = 3)
 }
 dev.off()
 

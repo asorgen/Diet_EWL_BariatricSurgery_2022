@@ -2,7 +2,8 @@
 rm(list=ls())
 
 ANALYSIS <- "ASA24"
-module <- paste0("Prediction")
+moduleRoot <- paste0("Prediction")
+params <- "~/git/Diet_EWL_BariatricSurgery_2022"
 
 
 ##### Libraries #####
@@ -16,54 +17,81 @@ library(nlme)
 
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+
+if (length(args) == 0) {
+  args <- params
+  rm(params)
+}
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")
 } else {
   message("\n************* Running locally *************")
   gitRoot <- args[1]
-  message("gitRoot = ", gitRoot)
+  gitInput <- file.path(gitRoot, "analysis", "input")
+  gitScripts <- file.path(gitRoot, "analysis", "Rscripts"); rm(gitRoot)
   
-  today <- as.character(format(Sys.Date(), "%Y%b%d"))
   root <- paste0("~/BioLockJ_pipelines/")
-  dir.create(root, showWarnings = FALSE)
-  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
-  dir.create(root, showWarnings = FALSE)
-  rootInput <- paste0(root, "input/")
-  dir.create(rootInput, showWarnings = FALSE)
+  pipeline <- paste0(ANALYSIS,"_analysis_")
   
-  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
-  message("gitInput = ", gitInput)
+  if (any(dir(root) %like% pipeline) == TRUE) {
+    root <- paste0(root,"/",str_subset(dir(root), pipeline), "/")
+  } else {
+    today <- as.character(format(Sys.Date(), "%Y%b%d"))
+    root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+    dir.create(root, showWarnings = FALSE)
+  }; rm(pipeline, ANALYSIS)
   
-  file.copy(gitInput,
-            rootInput,
-            recursive = TRUE)
+  if (any(dir(root) == "input") == FALSE) {
+    # rootInput <- paste0(root, "input/")
+    # dir.create(rootInput, showWarnings = FALSE)
+    
+    file.copy(gitInput,
+              root,
+              recursive = TRUE)
+    
+  }; rm(gitInput)
   
-  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
-  message(paste0(root, module, "/"))
+  module <- moduleRoot
   
-  gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
-  message("gitScripts = ", gitScripts)
+  if (any(dir(root) %like% module) == TRUE) {
+    moduleDir <- paste0(root,str_subset(dir(root), module), "/")
+  } else {
+    moduleDir <- paste0(root, module, "/")
+    dir.create(moduleDir, showWarnings = FALSE)
+  }; rm(module, root)
   
-  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
-  file.copy(script,
-            paste0(root, module, "/script/"),
-            recursive = TRUE)
+  scriptDir <- paste0(moduleDir, "script/")
+  if (any(dir(moduleDir) == "script") == FALSE) {
+    dir.create(scriptDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/", moduleRoot, ".R")
+    file.copy(script,
+              scriptDir,
+              recursive = TRUE)
+  }; rm(scriptDir, moduleRoot)
   
-  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  outputDir <- paste0(moduleDir, "output/")
+  if (any(dir(moduleDir) == "output") == FALSE) {
+    dir.create(outputDir, showWarnings = FALSE)
+  }
   
-  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/functions.R"); script
-  file.copy(script,
-            paste0(root, module, "/resources/"),
-            recursive = TRUE)
+  files <- list.files(outputDir, recursive = TRUE, full.names = TRUE)
+  file.remove(files); rm(files, outputDir)
   
-  setwd(paste0(root, module, "/script/"))
+  resourcesDir <- paste0(moduleDir, "resources/")
+  if (any(dir(moduleDir) == "resources") == FALSE) {
+    dir.create(resourcesDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/functions.R")
+    file.copy(script,
+              resourcesDir,
+              recursive = TRUE)
+  }; rm(resourcesDir, gitScripts)
+  
+  setwd(paste0(moduleDir, "script/"))
   
 }
-rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
 
 pipeRoot = dirname(dirname(getwd()))
 moduleDir <- dirname(getwd())
@@ -265,37 +293,37 @@ df <- na.omit(df)
 df <- spread(df, Timepoint, PEWL_kg)
 
 df$Outcome_12M <- ifelse( df$TWELVE > 50, "Responder",
-                          ifelse( df$TWELVE <= 50, "Non-responder", 
+                          ifelse( df$TWELVE <= 50, "Suboptimal responder", 
                                   NA))
 
 df$Outcome_18M <- ifelse( df$EIGHTEEN > 50, "Responder",
-                          ifelse( df$EIGHTEEN <= 50, "Non-responder", 
+                          ifelse( df$EIGHTEEN <= 50, "Suboptimal responder", 
                                   NA))
 
 df$Outcome_24M <- ifelse( df$TWENTY_FOUR > 50, "Responder",
-                          ifelse( df$TWENTY_FOUR <= 50, "Non-responder", 
+                          ifelse( df$TWENTY_FOUR <= 50, "Suboptimal responder", 
                                   NA))
 
 df$Outcome_12M_18M <- ifelse((df$Outcome_12M == "Responder" & df$Outcome_18M == "Responder"), "Consistent Responder",
-                             ifelse((df$Outcome_12M == "Responder" & df$Outcome_18M == "Non-responder"), "12-month responder only",
-                                    ifelse((df$Outcome_12M == "Non-responder" & df$Outcome_18M == "Responder"), "18-month responder only",
-                                           ifelse((df$Outcome_12M == "Non-responder" & df$Outcome_18M == "Non-responder"), "Consistent Non-responder",
+                             ifelse((df$Outcome_12M == "Responder" & df$Outcome_18M == "Suboptimal responder"), "12-month Responder only",
+                                    ifelse((df$Outcome_12M == "Suboptimal responder" & df$Outcome_18M == "Responder"), "18-month Responder only",
+                                           ifelse((df$Outcome_12M == "Suboptimal responder" & df$Outcome_18M == "Suboptimal responder"), "Consistent Suboptimal responder",
                                                   NA))))
 
 df$Outcome_12M_24M <- ifelse((df$Outcome_12M == "Responder" & df$Outcome_24M == "Responder"), "Consistent Responder",
-                             ifelse((df$Outcome_12M == "Responder" & df$Outcome_24M == "Non-responder"), "12-month responder only",
-                                    ifelse((df$Outcome_12M == "Non-responder" & df$Outcome_24M == "Responder"), "24-month responder only",
-                                           ifelse((df$Outcome_12M == "Non-responder" & df$Outcome_24M == "Non-responder"), "Consistent Non-responder",
+                             ifelse((df$Outcome_12M == "Responder" & df$Outcome_24M == "Suboptimal responder"), "12-month Responder only",
+                                    ifelse((df$Outcome_12M == "Suboptimal responder" & df$Outcome_24M == "Responder"), "24-month Responder only",
+                                           ifelse((df$Outcome_12M == "Suboptimal responder" & df$Outcome_24M == "Suboptimal responder"), "Consistent Suboptimal responder",
                                                   NA))))
 
 df$Outcome_18M_24M <- ifelse((df$Outcome_18M == "Responder" & df$Outcome_24M == "Responder"), "Consistent Responder",
-                             ifelse((df$Outcome_18M == "Responder" & df$Outcome_24M == "Non-responder"), "18-month responder only",
-                                    ifelse((df$Outcome_18M == "Non-responder" & df$Outcome_24M == "Responder"), "24-month responder only",
-                                           ifelse((df$Outcome_18M == "Non-responder" & df$Outcome_24M == "Non-responder"), "Consistent Non-responder",
+                             ifelse((df$Outcome_18M == "Responder" & df$Outcome_24M == "Suboptimal responder"), "18-month Responder only",
+                                    ifelse((df$Outcome_18M == "Suboptimal responder" & df$Outcome_24M == "Responder"), "24-month Responder only",
+                                           ifelse((df$Outcome_18M == "Suboptimal responder" & df$Outcome_24M == "Suboptimal responder"), "Consistent Suboptimal responder",
                                                   NA))))
 
 df$Consistency <- ifelse((df$Outcome_12M == "Responder" & df$Outcome_18M == "Responder" & df$Outcome_24M == "Responder"), "Consistent Responder",
-                             ifelse((df$Outcome_12M == "Non-responder" & df$Outcome_18M == "Non-responder" & df$Outcome_24M == "Non-responder"), "Consistent Non-responder",
+                             ifelse((df$Outcome_12M == "Suboptimal responder" & df$Outcome_18M == "Suboptimal responder" & df$Outcome_24M == "Suboptimal responder"), "Consistent Suboptimal responder",
                                     "Inconsistent"))
 
 MONTHS <- c("TWELVE", "EIGHTEEN", "TWENTY_FOUR")
@@ -338,6 +366,7 @@ for (i in 1:ncol(all_combinations)) {
   
   plot <- plot + theme(legend.title = element_blank(),
                        legend.position = "right"); plot
+  plot <- plot + guides(shape = guide_legend(order = 2),col = guide_legend(order = 1)); plot
   
   # plot <- plot + stat_regline_equation()
   plot

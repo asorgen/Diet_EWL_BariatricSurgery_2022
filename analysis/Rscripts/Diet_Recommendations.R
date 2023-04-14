@@ -7,7 +7,9 @@ rm(list=ls())
 ##### To edit #####
 ANALYSIS <- "ASA24"
 
-module <- paste0("Diet_Recommendations")
+moduleRoot <- paste0("Diet_Recommendations")
+
+params <- "~/git/Diet_EWL_BariatricSurgery_2022"
 
 ##### Global setup #####
 R <- sessionInfo()
@@ -26,54 +28,81 @@ library(data.table); message("data.table:", packageVersion("data.table"))
 
 ##### Set up working environment #####
 args <- commandArgs(trailingOnly = TRUE)
-# args <- "~/git/Diet_EWL_BariatricSurgery_2022"
+
+if (length(args) == 0) {
+  args <- params
+  rm(params)
+}
 
 if (args[1] == "BLJ") {
   message("\n************* Running in BioLockJ *************")
 } else {
   message("\n************* Running locally *************")
   gitRoot <- args[1]
-  message("gitRoot = ", gitRoot)
+  gitInput <- file.path(gitRoot, "analysis", "input")
+  gitScripts <- file.path(gitRoot, "analysis", "Rscripts"); rm(gitRoot)
   
-  today <- as.character(format(Sys.Date(), "%Y%b%d"))
   root <- paste0("~/BioLockJ_pipelines/")
-  dir.create(root, showWarnings = FALSE)
-  root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
-  dir.create(root, showWarnings = FALSE)
-  rootInput <- paste0(root, "input/")
-  dir.create(rootInput, showWarnings = FALSE)
+  pipeline <- paste0(ANALYSIS,"_analysis_")
   
-  gitInput <- file.path(gitRoot, "analysis", "data", "metadataTables")
-  message("gitInput = ", gitInput)
+  if (any(dir(root) %like% pipeline) == TRUE) {
+    root <- paste0(root,"/",str_subset(dir(root), pipeline), "/")
+  } else {
+    today <- as.character(format(Sys.Date(), "%Y%b%d"))
+    root <- paste0(root,ANALYSIS,"_analysis_", today, "/")
+    dir.create(root, showWarnings = FALSE)
+  }; rm(pipeline, ANALYSIS)
   
-  file.copy(gitInput,
-            rootInput,
-            recursive = TRUE)
+  if (any(dir(root) == "input") == FALSE) {
+    # rootInput <- paste0(root, "input/")
+    # dir.create(rootInput, showWarnings = FALSE)
+    
+    file.copy(gitInput,
+              root,
+              recursive = TRUE)
+    
+  }; rm(gitInput)
   
-  dir.create(paste0(root, module, "/"), showWarnings = FALSE)
-  message(paste0(root, module, "/"))
+  module <- moduleRoot
   
-  gitScripts <- file.path(gitRoot, "analysis", "Rscripts")
-  message("gitScripts = ", gitScripts)
+  if (any(dir(root) %like% module) == TRUE) {
+    moduleDir <- paste0(root,str_subset(dir(root), module), "/")
+  } else {
+    moduleDir <- paste0(root, module, "/")
+    dir.create(moduleDir, showWarnings = FALSE)
+  }; rm(module, root)
   
-  dir.create(paste0(root, module, "/script/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/",str_subset(dir(gitScripts), module))
-  file.copy(script,
-            paste0(root, module, "/script/"),
-            recursive = TRUE)
+  scriptDir <- paste0(moduleDir, "script/")
+  if (any(dir(moduleDir) == "script") == FALSE) {
+    dir.create(scriptDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/", moduleRoot, ".R")
+    file.copy(script,
+              scriptDir,
+              recursive = TRUE)
+  }; rm(scriptDir, moduleRoot)
   
-  dir.create(paste0(root, module, "/output/"), showWarnings = FALSE)
+  outputDir <- paste0(moduleDir, "output/")
+  if (any(dir(moduleDir) == "output") == FALSE) {
+    dir.create(outputDir, showWarnings = FALSE)
+  }
   
-  dir.create(paste0(root, module, "/resources/"), showWarnings = FALSE)
-  script = paste0(gitScripts,"/functions.R"); script
-  file.copy(script,
-            paste0(root, module, "/resources/"),
-            recursive = TRUE)
+  files <- list.files(outputDir, recursive = TRUE, full.names = TRUE)
+  file.remove(files); rm(files, outputDir)
   
-  setwd(paste0(root, module, "/script/"))
+  resourcesDir <- paste0(moduleDir, "resources/")
+  if (any(dir(moduleDir) == "resources") == FALSE) {
+    dir.create(resourcesDir, showWarnings = FALSE)
+    
+    script = paste0(gitScripts,"/functions.R")
+    file.copy(script,
+              resourcesDir,
+              recursive = TRUE)
+  }; rm(resourcesDir, gitScripts)
+  
+  setwd(paste0(moduleDir, "script/"))
   
 }
-rm(ANALYSIS, gitInput, gitRoot, gitScripts, root, rootInput, script, today)
 
 pipeRoot = dirname(dirname(getwd()))
 moduleDir <- dirname(getwd())
@@ -138,6 +167,54 @@ myTable$TFAT_energy_ratio <- (myTable$TFAT_in_kcal / myTable$KCAL) * 100
 myTable$PROT_1.1g <- 1.1 * myTable$Ideal_kg
 myTable$PROT_1.5g <- 1.5 * myTable$Ideal_kg
 
+###### Edit ages #####
+PatientIDs <- unique(myTable$PatientID)
+for (i in PatientIDs) {
+  Age.BL <- myTable[which(myTable$PatientID == i & myTable$time == 0), "Age"]
+  Age.12M <- Age.BL + 1
+  Age.24M <- Age.BL + 2
+  myTable[which(myTable$PatientID == i & myTable$time == 12), "Age"] <- Age.12M
+  myTable[which(myTable$PatientID == i & myTable$time == 18), "Age"] <- Age.12M
+  myTable[which(myTable$PatientID == i & myTable$time == 24), "Age"] <- Age.24M
+}
+
+##### Set up DRIs #####
+myTable$EER <- NA
+EER.M <- function(age, weight, height) {
+  EER <- 662 - (9.53 * age) + ((15.91 * weight) + (539.6 * height))
+  return(EER)
+}
+EER.F <- function(age, weight, height) {
+  EER <- 354 - (6.91 * age) + ((9.36 * weight) + (726 * height))
+  return(EER)
+}
+
+for (i in 1:nrow(myTable)) {
+  age <- myTable$Age[i]
+  weight <- myTable$Weight_kg[i]
+  height <- myTable$Height_m[i]
+  terms <- c(age, weight, height)
+  if (all(is.na(terms) == FALSE) == TRUE) {
+    myTable$EER[i] <- ifelse(myTable$Sex[i] == "M", EER.M(age, weight, height),
+                             EER.F(age, weight, height))
+  }
+}
+
+
+myTable$EER_DRI <- ifelse(myTable$KCAL > myTable$EER, "Exceeded",
+                          ifelse(myTable$KCAL < myTable$EER, "Under",
+                                 NA))
+
+myTable$Protein_EAR_g_kg <- myTable$Weight_kg * 0.66
+myTable$Protein_RDA_g_kg <- myTable$Weight_kg * 0.80
+
+myTable$Protein_EAR <- ifelse(myTable$PROT > myTable$Protein_EAR_g_kg, "Met",
+                          ifelse(myTable$PROT < myTable$Protein_EAR_g_kg, "Under",
+                                 NA))
+myTable$Protein_RDA <- ifelse(myTable$PROT > myTable$Protein_RDA_g_kg, "Met",
+                              ifelse(myTable$PROT < myTable$Protein_RDA_g_kg, "Under",
+                                     NA))
+
 ##### Analyze actual v recommended protein intake at each timepoint #####
 results <- data.frame()
 summary <- data.frame()
@@ -166,7 +243,7 @@ for (month in months) {
   m <- which(colnames(df) == paste0("M", month))
   
   df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                               ifelse(df[,m] < 50, "Non-responder",
+                               ifelse(df[,m] < 50, "Suboptimal responder",
                                       NA))
   df <- df[!is.na(df$ResponderStatus),]
   bl <- which(colnames(df) == "M0")
@@ -203,10 +280,10 @@ for (month in months) {
     freq <- as.data.frame(table(df2$ResponderStatus, df2$PROT_needs_met))
     freq2 <- as.data.frame(table(df2$ResponderStatus))
     
-    n_NR <- freq2$Freq[which(freq2$Var1 == "Non-responder")]
+    n_NR <- freq2$Freq[which(freq2$Var1 == "Suboptimal responder")]
     n_R <- freq2$Freq[which(freq2$Var1 == "Responder")]
     
-    freq$Percent <- ifelse(freq$Var1 == "Non-responder", (freq$Freq / n_NR) * 100,
+    freq$Percent <- ifelse(freq$Var1 == "Suboptimal responder", (freq$Freq / n_NR) * 100,
                            (freq$Freq / n_R) * 100)
     freq$ResponderMonth <- month
     freq$Timepoint <- i
@@ -293,7 +370,7 @@ for (month in months) {
   m <- which(colnames(df) == paste0("M", month))
   
   df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                               ifelse(df[,m] < 50, "Non-responder",
+                               ifelse(df[,m] < 50, "Suboptimal responder",
                                       NA))
   df <- df[!is.na(df$ResponderStatus),]
   bl <- which(colnames(df) == "M0")
@@ -332,7 +409,7 @@ for (month in months) {
       group_by(ResponderStatus, Diet) %>%
       get_summary_stats(Intake, type = "mean")
     
-    n_NR <- averages$n[which(averages$ResponderStatus == "Non-responder")][1]
+    n_NR <- averages$n[which(averages$ResponderStatus == "Suboptimal responder")][1]
     n_R <- averages$n[which(averages$ResponderStatus == "Responder")][1]
     
     averages$ResponderMonth <- month
@@ -410,7 +487,7 @@ for (month in months) {
   m <- which(colnames(df) == paste0("M", month))
   
   df$ResponderStatus <- ifelse(df[,m] >= 50, "Responder",
-                               ifelse(df[,m] < 50, "Non-responder",
+                               ifelse(df[,m] < 50, "Suboptimal responder",
                                       NA))
   df <- df[!is.na(df$ResponderStatus),]
   bl <- which(colnames(df) == "M0")
@@ -447,10 +524,10 @@ for (month in months) {
   freq <- as.data.frame(table(df$ResponderStatus, df$PROT_needs_met))
   freq2 <- as.data.frame(table(df$ResponderStatus))
   
-  n_NR <- freq2$Freq[which(freq2$Var1 == "Non-responder")]
+  n_NR <- freq2$Freq[which(freq2$Var1 == "Suboptimal responder")]
   n_R <- freq2$Freq[which(freq2$Var1 == "Responder")]
   
-  freq$Percent <- ifelse(freq$Var1 == "Non-responder", (freq$Freq / n_NR) * 100,
+  freq$Percent <- ifelse(freq$Var1 == "Suboptimal responder", (freq$Freq / n_NR) * 100,
                          (freq$Freq / n_R) * 100)
   freq$ResponderMonth <- month
   # freq$Timepoint <- i

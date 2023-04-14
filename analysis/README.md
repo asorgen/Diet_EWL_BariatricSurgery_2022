@@ -120,62 +120,63 @@ Move to the analysis folder:
 
 # Module Output
 
-## 1. PatientCharacteristics
+## 0. PatientCharacteristics
+- **Supplemental Table 1**: SummaryTable.tsv
 
 
-## 2. BMI_Results
+## 1. BMI_Results
 
 
-## 3. ExcessWeightLoss
-- **Table 1**: Avg_weight_metric_by_SurgeryType.tsv & SurgeryType_t_wilcox_weight_metric_results.tsv
+## 2. ExcessWeightLoss
+- **Table 1**: EWL_Summary_table.tsv & EWL_Summary_Surgery.tsv
 
 
-## 4. ASA24Average
+## 3. ASA24Average
 
 
-## 5. WeightMetaMerge
+## 4. WeightMetaMerge
 
 
-## 6. Nutrient_Analysis
+## 5. Nutrient_Analysis
+- **Table 2**: Macros_by_6M_12M_18M_24M_Outcome__Mean_SD_EnergyRatio.tsv
+- **Supplemental Table 3**: Macros_by_6M_12M_18M_24M_Outcome__Mean_SD_EnergyRatio.tsv
+- **Table 3**: Macros_by_6M_12M_18M_24M_Outcome__Mean_SD_EnergyRatio.tsv
 
 
-## 7. Nutrient_Analysis_update
-- **Figure 3**: macronutrient_v_PEWL_spearman_12_18_24_no_outliers.pdf
-- **Table 2a**: Table_2a_12M.tsv 
-- **Table 2b**: Table_2b_24M.tsv
-- **Supplemental Table 2**: Table_S2_18M.tsv
-- **Supplemental Figure 5**: macronutrient_spearman_by_timepoint_with_outliers_12_24_only.pdf
+## 6. Nutrient_Analysis_update
+- **Figure 2**: macronutrient_v_PEWL_spearman_12_18_24_no_outliers.pdf
+- **Table 2**: Table_2a_12M.tsv 
+- **Supplemental Table 3**: Table_S2_18M.tsv
+- **Table 3**: Table_2b_24M.tsv 
+- **Supplemental Figure 4**: macronutrient_spearman_by_timepoint_with_outliers_12_24_only.pdf
+
+## 7. Nutrient_Analysis_24mo_patients
+- **Supplemental Table 4**: Table_S3_12M.tsv & Average_nutrient_intake_by_responder_24mo_patients.tsv
 
 
-## 8. Nutrient_Analysis_24mo_patients
-- **Supplemental Table 3**: Table_S3_12M.tsv
-
-
-## 9. Prediction
+## 8. Prediction
 - **Supplemental Figure 2**: excess_weight_loss_plots_12_18_24_only_colored.pdf
 
 
-## 10. Barplot_summaries
+## 9. Barplot_summaries
 - **Figure 1**: surgery_PEWL_barplots.pdf
-- **Supplemental Table 1a**: Wilcoxon_Nutrient_Table_Surgery_Type.tsv
+- **Supplemental Table 2a**: Wilcoxon_Nutrient_Table_Surgery_Type.tsv
 - **Supplemental Figure 3**: response_energy_ratio_barplots.pdf
-- **Supplemental Figure 5**: response_intake_barplots.pdf
 
 
-## 11. Nutrient_Intake_Over_Time
+## 10. Nutrient_Intake_Over_Time
 
 
-## 12. MetaLinearModeling
-- **Figure 2**: UnivariateMLM_Timepoint_BLto24months_Boxplots_wilcox_PUB.pdf
-- **Supplemental Table 1b**: UnivariateMLMResults_BLto24months_by_SurgeryType.tsv
+## 11. MetaLinearModeling
+- **Figure 3**: UnivariateMLM_Timepoint_BLto24months_Boxplots_wilcox_PUB.pdf
+- **Supplemental Table 2b**: UnivariateMLMResults_BLto24months_by_SurgeryType.tsv
 
 
-## 13. ASA24_Intake_Days
+## 12. ASA24_Intake_Days
 
 
-## 14. Energy_Ratio_Analysis
-- **Supplemental Figure 7**: energy_ratio_barplots_over_time_by_Outcome_tukey.pdf
+## 13. Energy_Ratio_Analysis
+- **Supplemental Figure 6**: energy_ratio_barplots_over_time_by_Outcome_tukey.pdf
 
-
-## 15. Diet_Recommendations
-- **Supplemental Figure 6**: PROT_needs_met_by_ResponderStatus_all_timepoints.pdf
+## 14. Diet_Recommendations
+- **Supplemental Figure 5**: PROT_need_met_by_ResponderStatus_all_timepoints.pdf
