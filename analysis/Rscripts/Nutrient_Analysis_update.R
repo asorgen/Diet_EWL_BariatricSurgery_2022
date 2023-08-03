@@ -769,7 +769,7 @@ for (i in 2:length(MONTHS)) {
     # df2$MACRO <- remove_outliers(df2$MACRO)
     # df2 <- na.omit(df2)
     # outliers <- n - nrow(df2)
-    # caption.lab <- paste0("*", outliers, " outliers removed")
+    # caption.lab <- paste0(outliers, " outliers removed")
     
     myKen <- cor.test( df2$MACRO, df2$PEWL, method = "kendall" )
     mySpear <- cor.test( df2$MACRO, df2$PEWL, method = "spearman" )
@@ -872,7 +872,7 @@ for (i in 2:length(MONTHS)) {
     df2$MACRO <- remove_outliers(df2$MACRO)
     df2 <- na.omit(df2)
     outliers <- n - nrow(df2)
-    caption.lab <- paste0("*", outliers, " outliers removed")
+    caption.lab <- paste0(outliers, " outliers removed")
     
     tag <- tags[tagIndex]
     title.lab <- month.labs[i]
@@ -966,7 +966,7 @@ for (i in 2:length(MONTHS)) {
     df2$MACRO <- remove_outliers(df2$MACRO)
     df2 <- na.omit(df2)
     outliers <- n - nrow(df2)
-    caption.lab <- paste0("*", outliers, " outliers removed")
+    caption.lab <- paste0(outliers, " outliers removed")
     
     tag <- tags[tagIndex]
     title.lab <- month.labs[i]
@@ -1062,7 +1062,7 @@ for (i in 2:length(MONTHS)) {
     # df2$MACRO <- remove_outliers(df2$MACRO)
     # df2 <- na.omit(df2)
     # outliers <- n - nrow(df2)
-    # caption.lab <- paste0("*", outliers, " outliers removed")
+    # caption.lab <- paste0(outliers, " outliers removed")
     
     tag <- tags[tagIndex]
     title.lab <- month.labs[i]
@@ -1241,7 +1241,7 @@ for (i in 2:length(MONTHS)) {
     df2$MACRO <- remove_outliers(df2$MACRO)
     df2 <- na.omit(df2)
     outliers <- n - nrow(df2)
-    caption.lab <- paste0("*", outliers, " outliers removed")
+    caption.lab <- paste0(outliers, " outliers removed")
     
     tag <- tags[tagIndex]
     title.lab <- month.labs[i]
@@ -1336,7 +1336,7 @@ for (i in 2:length(MONTHS)) {
     df2$MACRO <- remove_outliers(df2$MACRO)
     df2 <- na.omit(df2)
     outliers <- n - nrow(df2)
-    caption.lab <- paste0("*", outliers, " outliers removed")
+    caption.lab <- paste0(outliers, " outliers removed")
     
     tag <- tags[tagIndex]
     title.lab <- month.labs[i]
