@@ -78,44 +78,44 @@ Move to the analysis folder:
 `Rscript BMI_Results.R <path/to>/Diet_EWL_BariatricSurgery_2022 weight_update_BLonly_excluded.txt`
 
 #### 3. ExcessWeightLoss
-`Rscript ExcessWeightLoss.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript ExcessWeightLoss.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 #### 4. ASA24Average
-`Rscript ASA24Average.R ~/git/Diet_EWL_BariatricSurgery_2022 TNS_Master_file_enrolled_5-31-22.txt`
+`Rscript ASA24Average.R <path/to>/Diet_EWL_BariatricSurgery_2022 TNS_Master_file_enrolled_5-31-22.txt`
 
 #### 5. WeightMetaMerge
-`Rscript WeightMetaMerge.R ~/git/Diet_EWL_BariatricSurgery_2022 ASA24_metadata.tsv HEI_data.txt`
+`Rscript WeightMetaMerge.R <path/to>/Diet_EWL_BariatricSurgery_2022 ASA24_metadata.tsv HEI_data.txt`
 
 #### 6. Nutrient_Analysis
-`Rscript Nutrient_Analysis.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript Nutrient_Analysis.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 
 #### 7. Nutrient_Analysis_update
-`Rscript Nutrient_Analysis_update.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript Nutrient_Analysis_update.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 #### 8. Nutrient_Analysis_24mo_patients
-`Rscript Nutrient_Analysis_24mo_patients.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript Nutrient_Analysis_24mo_patients.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 #### 9. Prediction
-`Rscript Prediction.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript Prediction.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 #### 10. Barplot_summaries
-`Rscript Barplot_summaries.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript Barplot_summaries.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 #### 11. Nutrient_Intake_Over_Time
-`Rscript Nutrient_Intake_Over_Time.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript Nutrient_Intake_Over_Time.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 #### 12. MetaLinearModeling
-`Rscript MetaLinearModeling.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript MetaLinearModeling.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 #### 13. ASA24_Intake_Days
-`Rscript ASA24_Intake_Days.R ~/git/Diet_EWL_BariatricSurgery_2022 TNS_Master_file_enrolled_5-31-22.txt`
+`Rscript ASA24_Intake_Days.R <path/to>/Diet_EWL_BariatricSurgery_2022 TNS_Master_file_enrolled_5-31-22.txt`
 
 #### 14. Energy_Ratio_Analysis
-`Rscript Energy_Ratio_Analysis.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript Energy_Ratio_Analysis.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 #### 15. Diet_Recommendations
-`Rscript Diet_Recommendations.R ~/git/Diet_EWL_BariatricSurgery_2022`
+`Rscript Diet_Recommendations.R <path/to>/Diet_EWL_BariatricSurgery_2022`
 
 
 # Module Output

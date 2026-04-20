@@ -3,7 +3,7 @@ rm(list=ls())
 
 ANALYSIS <- "ASA24"
 moduleRoot <- paste0("Prediction")
-params <- "~/git/Diet_EWL_BariatricSurgery_2022"
+params <- "."
 
 
 ##### Libraries #####

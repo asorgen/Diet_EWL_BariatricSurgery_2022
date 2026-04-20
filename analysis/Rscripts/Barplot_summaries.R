@@ -7,7 +7,7 @@ rm(list=ls())
 
 ANALYSIS <- "ASA24"
 moduleRoot <- paste0("Barplot_summaries")
-params <- "~/git/Diet_EWL_BariatricSurgery_2022"
+params <- "."
 
 
 ##### Libraries #####

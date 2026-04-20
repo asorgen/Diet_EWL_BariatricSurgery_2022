@@ -15,7 +15,7 @@ included <- c(  0
                 , 24
 )
 params <- vector()
-params <- c(params, "~/git/Diet_EWL_BariatricSurgery_2022")
+params <- c(params, ".")
 
 
 ##### Libraries #####

@@ -8,7 +8,7 @@ rm(list=ls())
 ANALYSIS <- "ASA24"
 
 moduleRoot <- paste0("Energy_Ratio_Analysis")
-params <- "~/git/Diet_EWL_BariatricSurgery_2022"
+params <- "."
 
 ##### Global setup #####
 R <- sessionInfo()
