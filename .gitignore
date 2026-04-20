@@ -1,8 +1,17 @@
 # Ignore Mac system files
+.DS_Store
 .DS_store
+Icon
 
-# Ignore PowerPoint Presentations
+# Office / presentation files
 *.pptx
+*.xlsx
+
+# Patient data & identifying information
+analysis/data/metadataTables/
+
+# Claude Code session files
+CLAUDE.md
 
 # Ignore any file with "NOT_IN_GIT" in the folder or file name.
 **NOT_IN_GIT**
