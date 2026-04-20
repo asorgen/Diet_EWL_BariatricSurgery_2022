@@ -13,6 +13,9 @@ Analysis code for:
 - The 12- and 24-month weight outcomes were strongly correlated with each other, but dietary factors were not — suggesting diet drives *initial* loss but not *sustained* loss
 - Results held across both surgery types (Roux-en-Y gastric bypass and sleeve gastrectomy) and after stratifying by responder status (≥50% excess weight loss by Reinhold criteria)
 
+![Spearman correlations between macronutrient intake and excess weight loss at 12, 18, and 24 months post-surgery](Final_Tables_Figures/figure3.png)
+*Figure: Spearman correlations between macronutrient intake and %EWL at 12 months (top row), 18 months (middle), and 24 months (bottom). Significant associations with energy and protein at 12 months do not persist to 24 months.*
+
 ---
 
 ## Overview
