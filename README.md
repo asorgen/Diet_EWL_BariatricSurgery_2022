@@ -1,38 +1,106 @@
+# Diet and Weight Loss After Bariatric Surgery
 
-# Macronutrient and Weight Loss Association Analysis
+Analysis code for:
 
-## Transparency and Reproducibility
+> **Sorgen AA**, Steffen KJ, Fodor AA, Carroll IM, Bond D, Crosby R, Heinberg L. (2023). Longer-term weight loss outcomes are not primarily driven by diet following Roux-en-Y gastric bypass and sleeve gastrectomy. *Nutrients* 15(15):3323. https://doi.org/10.3390/nu15153323
 
-This repository contains:         
+---
 
- * Configuration files used for BioLockJ pipeline management, see folder: `analysis/BLJ_config_files`
- * Limited metadata files for patient weight and ASA24 data, see folder: `analysis/data/metadataTables`
- * All R Scripts to run the entire analysis pipeline, see folder: `analysis/Rscripts`
- * Results of the analysis (figures and tables), see folder: `output`
+## Key Findings
 
-See `analysis/README` for instructions on how to repeat the entire analysis on your own machine, thus reproducing all figures and tables. A review module was added to the pipeline to facilitate readers and reviewers comparing the reproduced output the the corresponding components in the manuscript.
+- Caloric and macronutrient intake significantly associated with excess weight loss at **12 months** post-surgery, consistent with prior literature
+- These associations **did not persist to 24 months** — dietary intake was not a primary driver of longer-term outcomes
+- The 12- and 24-month weight outcomes were strongly correlated with each other, but dietary factors were not — suggesting diet drives *initial* loss but not *sustained* loss
+- Results held across both surgery types (Roux-en-Y gastric bypass and sleeve gastrectomy) and after stratifying by responder status (≥50% excess weight loss by Reinhold criteria)
 
-## Manuscript
+---
 
-The manuscript for this project is currently available through .
+## Overview
 
-Title:                
-_Long-term Weight Loss Outcomes are not Primarily Driven by Dietary Intake Following Roux-en-Y Gastric Bypass and Sleeve Gastrectomy_
+Bariatric surgery is the most effective long-term treatment for obesity, yet the mechanisms sustaining weight loss remain unclear. Dietary intake is often assumed to be a proximal behavioral driver of post-surgical outcomes, but evidence beyond 12 months is limited.
 
-Authors:               
-Alicia A Sorgen, Kristine Steffen, Anthony Fodor, Ian Carroll, Dale Bond, Ross Crosby, Leslie Heinberg
+This study examined relationships between total energy and macronutrient intake — collected via the validated ASA24 electronic 24-hour dietary recall system — and weight loss outcomes at 12 and 24 months post-surgery in a cohort of n=144 patients. We applied Spearman correlation, mixed linear models, and responder-stratified analyses to characterize when and how dietary intake relates to weight loss over time.
 
-This article is a preprint and has not been peer-reviewed. It reports new medical research that has yet to be evaluated and so should not be used to guide clinical practice.
+Clinical trial registration: NCT03065426.
 
+---
 
-## Abstract 
+## Skills Demonstrated
 
-**Background** Bariatric surgery is the most effective long-term method of weight loss, and often results in resolution of comorbid conditions. Dietary intake is considered a proximal behavioral driver of post-surgical weight loss, yet, mechanisms driving these improvements are still being elucidated. 
+- **Spearman correlation** across multiple timepoints with BH multiple-testing correction
+- **Mixed linear models** for repeated-measures longitudinal data (`nlme`)
+- **Responder classification** using Reinhold criteria (≥50% excess weight loss)
+- **ASA24 dietary recall processing** — averaging multiple recall days per patient per timepoint
+- **BioLockJ pipeline orchestration** — reproducible, containerized analysis pipeline
+- R scripting for clinical cohort data (demographics, BMI, EWL, dietary intake)
+- Longitudinal data wrangling and visualization (`ggplot2`, `ggpubr`, `gridExtra`)
 
-**Methods** In this study, we examine relationships between weight loss and food intake using a validated electronic 24-hour dietary recall method. We assessed the relationships of total energy and macronutrient intake and weight loss outcomes at 12- and 24-months post-RYGB and SG. 
+---
 
-**Results** Defining “responders” and “non-responders” using the traditional Reinhold criteria of 50% excess weight loss, we found some consistency with previous literature at the 12-month time point in which responders and non-responders both showed significant associations between weight loss and the intake of calories and total fat. However, adding to the results from previous studies, our study extended beyond 12 months and examined patients at 24 months post-surgery. At 24 months, we no longer observed the associations with calories and total fat. 
+## Repository Structure
 
-**Conclusion** These results suggest that dietary intake more strongly associates with, or is a primary determinant of, initial weight loss outcomes as there was a strong correlation between weight loss at the 12-month and 24-month time points but little consistency in positive correlations in dietary factors between these two time points. Our study suggests a short-term signal between these dietary factors and weight-related surgery outcome at the 12-month time point that is consistent with previous observations, but this signal does not persist past the 12-month time point. These results are essential for interpreting and designing clinical studies that measure surgery outcomes.
+```
+Diet_EWL_BariatricSurgery_2022/
+├── analysis/
+│   ├── BLJ_config_files/     # BioLockJ pipeline configuration
+│   ├── data/
+│   │   └── metadataTables/   # Patient data (not in repo — see Data Availability)
+│   ├── Rscripts/             # All analysis R scripts
+│   └── README.md             # Instructions for reproducing the analysis
+├── Final_Tables_Figures/     # Publication figures and tables (generated by pipeline)
+├── LICENSE
+└── README.md
+```
 
-**Trial Registration** clinicaltrials.gov, number NCT03065426. Registered 27 February 2017, https://www.clinicaltrials.gov/ct2/show/NCT03065426
+---
+
+## Analysis Scripts (`analysis/Rscripts/`)
+
+Scripts are run sequentially; each depends on outputs from prior steps.
+
+| Script | Output |
+|---|---|
+| `PatientCharacteristics.R` | Patient demographics summary (Supplemental Table 1) |
+| `BMI_Results.R` | BMI outcomes over time |
+| `ExcessWeightLoss.R` | EWL calculation; responder/non-responder classification (Table 1) |
+| `ASA24Average.R` | Average dietary recall days per patient per timepoint |
+| `WeightMetaMerge.R` | Merge weight outcomes with dietary metadata |
+| `Nutrient_Analysis.R` | Macronutrient intake vs. weight loss (initial analysis) |
+| `Nutrient_Analysis_update.R` | Main Spearman correlation analysis → **Figure 2, Tables 2a/2b** |
+| `Nutrient_Analysis_24mo_patients.R` | Analysis restricted to patients with 24-month data (Supplemental Table 4) |
+| `Prediction.R` | Scatter plots of weight loss vs. dietary intake (Supplemental Figure 2) |
+| `Barplot_summaries.R` | Intake by surgery type and responder status → **Figure 1, Supplemental Table 2a** |
+| `Nutrient_Intake_Over_Time.R` | Longitudinal macronutrient trajectories |
+| `MetaLinearModeling.R` | Mixed linear models → **Figure 3, Supplemental Table 2b** |
+| `ASA24_Intake_Days.R` | Dietary recall day counts per patient |
+| `Energy_Ratio_Analysis.R` | Macronutrient energy ratios (% total calories) (Supplemental Figure 6) |
+| `Diet_Recommendations.R` | Adherence to post-surgical dietary guidelines (Supplemental Figure 5) |
+| `functions.R` | Shared utilities (outlier removal, quintile binning, p-value formatting) |
+
+---
+
+## Reproducing the Analysis
+
+See `analysis/README.md` for full instructions. Two options:
+
+**Option A — BioLockJ (recommended):**
+```bash
+cd analysis/BLJ_config_files
+biolockj ASA24_analysis.properties          # local R
+biolockj -d ASA24_analysis.properties       # Docker
+```
+
+**Option B — Run R scripts directly:**
+```bash
+cd analysis/Rscripts/
+Rscript PatientCharacteristics.R <path/to>/Diet_EWL_BariatricSurgery_2022 weight_update_BLonly_excluded.txt
+# ... see analysis/README.md for full sequence
+```
+
+R version: 4.0.2. Key packages: `nlme`, `ggplot2`, `ggpubr`, `rstatix`, `stringr`, `tidyr`, `gridExtra`, `data.table`, `scales`.
+
+---
+
+## Data Availability
+
+Patient metadata, weight, and dietary recall data are not included in this repository to protect participant privacy. Data may be requested from the corresponding author. Clinical trial: [NCT03065426](https://clinicaltrials.gov/ct2/show/NCT03065426).
