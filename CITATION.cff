@@ -1,0 +1,45 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the associated publication."
+type: software
+authors:
+  - family-names: Sorgen
+    given-names: Alicia A.
+  - family-names: Steffen
+    given-names: Kristine J.
+  - family-names: Fodor
+    given-names: Anthony A.
+  - family-names: Carroll
+    given-names: Ian M.
+  - family-names: Bond
+    given-names: Dale
+  - family-names: Crosby
+    given-names: Ross
+  - family-names: Heinberg
+    given-names: Leslie
+title: "Analysis code for: Longer-term weight loss outcomes are not primarily driven by diet following Roux-en-Y gastric bypass and sleeve gastrectomy"
+repository-code: "https://github.com/asorgen/Diet_EWL_BariatricSurgery_2022"
+license: MIT
+preferred-citation:
+  type: article
+  authors:
+    - family-names: Sorgen
+      given-names: Alicia A.
+    - family-names: Steffen
+      given-names: Kristine J.
+    - family-names: Fodor
+      given-names: Anthony A.
+    - family-names: Carroll
+      given-names: Ian M.
+    - family-names: Bond
+      given-names: Dale
+    - family-names: Crosby
+      given-names: Ross
+    - family-names: Heinberg
+      given-names: Leslie
+  title: "Longer-term weight loss outcomes are not primarily driven by diet following Roux-en-Y gastric bypass and sleeve gastrectomy"
+  journal: "Nutrients"
+  year: 2023
+  volume: 15
+  issue: 15
+  article-number: "3323"
+  doi: "10.3390/nu15153323"
