@@ -1,7 +1,7 @@
 # Ignore Mac system files
 .DS_Store
 .DS_store
-Icon
+Icon*
 
 # Office / presentation files
 *.pptx
